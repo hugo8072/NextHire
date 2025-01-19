@@ -44,6 +44,8 @@ PORT=8000
 MONGO_URL=mongodb+srv://<username>:<password>@cluster0.mongodb.net/
 JWT_SECRET_KEY=your_secret_key
 DB_NAME=job_app_db
+```
+
 
 Running the Application
 Start the server:
