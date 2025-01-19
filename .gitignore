@@ -1,0 +1,8 @@
+# Ignore .env file
+.env
+
+# Ignore .idea folder (JetBrains IDEs like IntelliJ, WebStorm, PhpStorm)
+.idea/
+
+# Ignore node_modules folder
+node_modules/
