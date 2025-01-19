@@ -52,12 +52,18 @@ Start the server:
 npm start
 
 The server will run on the port specified in the .env file (default is 8000).  
+
 API Endpoints
+
 GET /: Test route to check if the API is working.
+
 /users: Routes for managing users.
+
 /tasks: Routes for managing tasks related to job applications.
-Contributing
+
+
 Contributions are welcome! Please fork the repository and create a pull request with your changes.  
+
 License
 This project is licensed under the MIT License.
 
