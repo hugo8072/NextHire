@@ -26,7 +26,7 @@ This project is currently in development. The goal is to create an application w
 ### Installation
 1. Clone the repository:
     ```sh
-    git clone https://github.com/yourusername/Job_Application_App.git
+    git clone https://github.com/hugo8072/Job_Application_App
     ```
 2. Navigate to the project directory:
     ```sh
