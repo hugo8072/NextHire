@@ -3,8 +3,7 @@ import User from '../models/User.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
-const router = express.Router(); // Corrected here
-
+const router = express.Router(); 
 router.get('/', (req, res) => {
     res.send("User routes are working");
 });
@@ -17,7 +16,7 @@ router.post('/register', async (req, res) => {
         await user.save();
         res.status(201).send({ user, message: "User created successfully!" });
     } catch (err) {
-        res.status(400).send({ error: err.message }); // Use err.message to get a clean error message
+        res.status(400).send({ error: err.message }); 
     }
 });
 
@@ -50,7 +49,6 @@ router.post('/login', async (req, res) => {
     }
 });
 
-// Register a user
-// Login a user
+
 
 export default router;
