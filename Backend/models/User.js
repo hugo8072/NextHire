@@ -5,6 +5,9 @@ const userSchema = new mongoose.Schema({
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
+},
+{
+    timestamps:true
 });
 
 // Correct usage: Applying pre-save hook directly to the schema
