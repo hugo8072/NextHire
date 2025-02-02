@@ -2,6 +2,7 @@
 
 ## Project Overview
 This project is currently in development.The goal is to create an application with an API that connects to a database to track job applications.
+
 (API developed. Next step - Frontend)
 
 
