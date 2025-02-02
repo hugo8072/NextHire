@@ -1,7 +1,11 @@
 ﻿# Job Application App📑💼
 
 ## Project Overview
-This project is currently in development. The goal is to create an application with an API that connects to a database to track job applications.
+This project is currently in development.The goal is to create an application with an API that connects to a database to track job applications.
+(API developed. Next step - Frontend)
+
+
+
 
 ## Features
 - **Express Server** 🖥️: The backend is built using Express.js, a fast and minimalist web framework for Node.js. 
