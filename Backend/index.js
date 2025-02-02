@@ -18,10 +18,10 @@ app.use(json());
 
 // Using the user routes
 import userRoutes from './routes/userRoutes.js'; // Correct path
-import taskRoutes from './routes/taskRoutes.js'; // Correct path
+import jobRoutes from './routes/jobRoutes.js'; // Correct path
 
 app.use('/users', userRoutes);
-app.use('/tasks', taskRoutes);
+app.use('/jobs', jobRoutes);
 // Test route
 app.get('/', (req, res) => {
   res.json({ message: 'Job application API is working!' });
