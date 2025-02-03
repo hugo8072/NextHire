@@ -1,27 +1,23 @@
 import mongoose from 'mongoose';
-import bcrypt from 'bcrypt';  
+import argon2 from 'argon2';
 
 const userSchema = new mongoose.Schema({
-    name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
-},
-{
-    timestamps:true
+    name: { type: String, required: true, trim: true },
+    email: { type: String, required: true, unique: true, trim: true, lowercase: true },
+    password: { type: String, required: true, trim: true },
+    phoneNumber: { type: String, required: true, trim: true },
+    chatId: { type: String, required: true, trim: true }, // Adicionando o campo chatId
+    verificationCode: { type: String },
+    codeExpiration: { type: Date }
 });
 
-// Correct usage: Applying pre-save hook directly to the schema
-userSchema.pre('save', async function(next) {
-    // 'this' refers to the current user document
-    if (this.isModified('password')) {  // Directly use 'this'
-        // Hash the password before saving it to the database with a salt round of 8
-        this.password = await bcrypt.hash(this.password, 8);
+userSchema.pre('save', async function (next) {
+    if (this.isModified('password')) {
+        this.password = await argon2.hash(this.password);
     }
-
-    next();  // Call the next middleware in the stack (to proceed with saving)
+    next();
 });
 
-// Create and export the User model from the schema
 const User = mongoose.model('User', userSchema);
 
 export default User;

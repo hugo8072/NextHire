@@ -1,67 +1,144 @@
 import express from 'express';
 import User from '../models/User.js';
-import bcrypt from 'bcrypt';
+import argon2 from 'argon2';
 import jwt from 'jsonwebtoken';
+import { body, validationResult } from 'express-validator';
+import { sendVerificationCode as sendEmailVerificationCode } from '../utils/mailer.js'; // Import Email function
+import { sendVerificationCode as sendTelegramVerificationCode } from '../utils/telegram.js'; // Import Telegram function
+import crypto from 'crypto';
+// telegram.js
+import TelegramBot from 'node-telegram-bot-api';
+import dotenv from 'dotenv';
 
-const router = express.Router(); 
+dotenv.config();
 
-// Test route to check if user routes are working
-router.get('/', (req, res) => {
-    res.send("User routes are working");
+const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: true });
+
+bot.on('message', (msg) => {
+    const chatId = msg.chat.id;
+    const text = msg.text;
+
+    // Responder à mensagem recebida
+    bot.sendMessage(chatId, `Você disse: ${text}`);
 });
 
-// Register route to create a new user
-router.post('/register', async (req, res) => {
+console.log('Bot está rodando...');
+
+export const sendVerificationCode = (chatId, code) => {
+    bot.sendMessage(chatId, `Seu código de verificação é: ${code}`);
+};
+const router = express.Router();
+
+const generateVerificationCode = () => {
+    return crypto.randomBytes(3).toString('hex'); // Generates a 6-character code
+};
+
+router.post('/register', [
+    body('email').isEmail().withMessage('Please provide a valid email'),
+    body('password')
+        .isLength({ min: 8 }).withMessage('Password must be at least 8 characters long')
+        .matches(/[a-z]/).withMessage('Password must contain at least one lowercase letter')
+        .matches(/[A-Z]/).withMessage('Password must contain at least one uppercase letter')
+        .matches(/[\W_]/).withMessage('Password must contain at least one special character'),
+    body('name').notEmpty().withMessage('Name is required'),
+    body('phoneNumber').notEmpty().withMessage('Phone number is required'),
+    body('chatId').notEmpty().withMessage('Telegram chat ID is required') // Add chatId validation
+], async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+
     try {
-        const { name, email, password } = req.body; // Destructuring user data from the request body
+        const { name, email, password, phoneNumber, chatId } = req.body;
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(400).send({ error: 'User with this email already exists' });
+        }
 
-        // Create a new User instance and save to database
-        const user = new User({ name, email, password });
-        await user.save();  // Save the user to the database
+        const hashedPassword = await argon2.hash(password);
+        const verificationCode = generateVerificationCode();
+        const codeExpiration = new Date(Date.now() + 10 * 60 * 1000); // Code valid for 10 minutes
 
-        // Send success response with the created user
-        res.status(201).send({ user, message: "User created successfully!" });
+        const user = new User({ name, email, password: hashedPassword, phoneNumber, chatId, verificationCode, codeExpiration });
+        await user.save();
+
+        await sendEmailVerificationCode(email, verificationCode);
+        await sendTelegramVerificationCode(chatId, verificationCode); // Send Telegram verification code
+
+        res.status(201).send({ user, message: "User created successfully! Verification code sent to email and Telegram." });
+
     } catch (err) {
-        // If an error occurs, send a 400 response with the error message
-        res.status(400).send({ error: err.message }); 
+        res.status(500).send({ error: 'Internal Server Error' });
     }
 });
 
-// Login route for user authentication
-router.post('/login', async (req, res) => {
+router.post('/login', [
+    body('email').isEmail().withMessage('Please provide a valid email'),
+    body('password').notEmpty().withMessage('Password is required')
+], async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).send({ error: 'Invalid email or password' });
+    }
+
     try {
-        const { email, password } = req.body;  // Destructuring email and password from the request body
-        const user = await User.findOne({ email }); // Find user by email
-    
-        // If the user is not found, throw an error
+        const { email, password } = req.body;
+        const user = await User.findOne({ email });
+
         if (!user) {
-            throw new Error('Unable to login. User not found');
+            return res.status(400).send({ error: 'Invalid email or password' });
         }
 
-        // Compare the provided password with the hashed password in the database
-        const isMatch = await bcrypt.compare(password, user.password);
-    
-        // If password doesn't match, throw an error
+        const isMatch = await argon2.verify(user.password, password);
         if (!isMatch) {
-            throw new Error('Unable to login. Invalid credentials');
+            return res.status(400).send({ error: 'Invalid email or password' });
         }
 
-        // Generate a JWT token for the user
-        const token = jwt.sign(
-            { _id: user._id.toString() }, // Include user ID in the token payload
-            process.env.JWT_SECRET_KEY  // Ensure this environment variable is set
-        );
-        
-        // Log the generated token and the user ID for debugging purposes
-        console.log('Generated Token:', token);
-        console.log("_id:", user._id.toString());  // Print the user ID
+        const verificationCode = generateVerificationCode();
+        const codeExpiration = new Date(Date.now() + 10 * 60 * 1000); // Code valid for 10 minutes
 
-        // Send the success response with user and token
+        user.verificationCode = verificationCode;
+        user.codeExpiration = codeExpiration;
+        await user.save();
+
+        await sendEmailVerificationCode(user.email, verificationCode);
+        await sendTelegramVerificationCode(user.chatId, verificationCode); // Send Telegram verification code
+
+        res.status(200).send({ message: "Verification code sent to email and Telegram." });
+
+    } catch (err) {
+        res.status(500).send({ error: 'Internal Server Error' });
+    }
+});
+
+router.post('/verify-code', [
+    body('email').isEmail().withMessage('Please provide a valid email'),
+    body('code').notEmpty().withMessage('Verification code is required')
+], async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+
+    try {
+        const { email, code } = req.body;
+        const user = await User.findOne({ email });
+
+        if (!user || user.verificationCode !== code || user.codeExpiration < new Date()) {
+            return res.status(400).send({ error: 'Invalid or expired verification code' });
+        }
+
+        const token = jwt.sign(
+            { _id: user._id.toString() },
+            process.env.JWT_SECRET_KEY,
+            { expiresIn: '1h' }
+        );
+
         res.status(200).send({ user, token, message: "Logged in successfully!" });
 
     } catch (err) {
-        // If an error occurs, send a 400 response with the error message
-        res.status(400).send({ error: err.message });
+        res.status(500).send({ error: 'Internal Server Error' });
     }
 });
 
