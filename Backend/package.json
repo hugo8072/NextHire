@@ -18,6 +18,7 @@
   "homepage": "https://github.com/hugo8072/Job_Application_App#readme",
   "dependencies": {
     "argon2": "^0.30.3",
+    "argon2-browser": "^1.18.0",
     "bcrypt": "^5.1.1",
     "body-parser": "^1.20.3",
     "cors": "^2.8.5",
