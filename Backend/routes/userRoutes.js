@@ -1,38 +1,18 @@
 import express from 'express';
 import User from '../models/User.js';
-import argon2 from 'argon2';
-import jwt from 'jsonwebtoken';
 import { body, validationResult } from 'express-validator';
-import { sendVerificationCode as sendEmailVerificationCode } from '../utils/mailer.js'; // Import Email function
-import { sendVerificationCode as sendTelegramVerificationCode } from '../utils/telegram.js'; // Import Telegram function
+import { sendVerificationCode as sendTelegramVerificationCode } from '../utils/telegram.js';
+import { hashPassword, verifyPassword } from '../utils/argon.js';
 import crypto from 'crypto';
-// telegram.js
-import TelegramBot from 'node-telegram-bot-api';
-import dotenv from 'dotenv';
 
-dotenv.config();
-
-const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: true });
-
-bot.on('message', (msg) => {
-    const chatId = msg.chat.id;
-    const text = msg.text;
-
-    // Responder à mensagem recebida
-    bot.sendMessage(chatId, `Você disse: ${text}`);
-});
-
-console.log('Bot está rodando...');
-
-export const sendVerificationCode = (chatId, code) => {
-    bot.sendMessage(chatId, `Seu código de verificação é: ${code}`);
-};
 const router = express.Router();
 
+// Utility function to generate a random 6-character verification code
 const generateVerificationCode = () => {
-    return crypto.randomBytes(3).toString('hex'); // Generates a 6-character code
+    return crypto.randomBytes(3).toString('hex');
 };
 
+// Registration route
 router.post('/register', [
     body('email').isEmail().withMessage('Please provide a valid email'),
     body('password')
@@ -42,7 +22,7 @@ router.post('/register', [
         .matches(/[\W_]/).withMessage('Password must contain at least one special character'),
     body('name').notEmpty().withMessage('Name is required'),
     body('phoneNumber').notEmpty().withMessage('Phone number is required'),
-    body('chatId').notEmpty().withMessage('Telegram chat ID is required') // Add chatId validation
+    body('chatId').notEmpty().withMessage('Telegram chat ID is required')
 ], async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -51,20 +31,22 @@ router.post('/register', [
 
     try {
         const { name, email, password, phoneNumber, chatId } = req.body;
+
         const existingUser = await User.findOne({ email });
         if (existingUser) {
             return res.status(400).send({ error: 'User with this email already exists' });
         }
 
-        const hashedPassword = await argon2.hash(password);
+        const hashedPassword = await hashPassword(password);
+
         const verificationCode = generateVerificationCode();
-        const codeExpiration = new Date(Date.now() + 10 * 60 * 1000); // Code valid for 10 minutes
+        const codeExpiration = new Date(Date.now() + 10 * 60 * 1000);
 
         const user = new User({ name, email, password: hashedPassword, phoneNumber, chatId, verificationCode, codeExpiration });
+        console.log('Stored hashed password of user: on register:', hashedPassword);
         await user.save();
 
-        await sendEmailVerificationCode(email, verificationCode);
-        await sendTelegramVerificationCode(chatId, verificationCode); // Send Telegram verification code
+        await sendTelegramVerificationCode(chatId, verificationCode);
 
         res.status(201).send({ user, message: "User created successfully! Verification code sent to email and Telegram." });
 
@@ -73,37 +55,43 @@ router.post('/register', [
     }
 });
 
+// Login route to authenticate user
 router.post('/login', [
     body('email').isEmail().withMessage('Please provide a valid email'),
     body('password').notEmpty().withMessage('Password is required')
 ], async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        return res.status(400).send({ error: 'Invalid email or password' });
+        return res.status(400).send({ error: 'Invalid email or password1111' });
     }
 
     try {
         const { email, password } = req.body;
+
         const user = await User.findOne({ email });
 
         if (!user) {
-            return res.status(400).send({ error: 'Invalid email or password' });
+            return res.status(400).send({ error: 'Invalid email or password2222z' });
         }
 
-        const isMatch = await argon2.verify(user.password, password);
+        console.log('Stored hashed password of user: on login', user.password);
+        console.log('Password provided by user:', password);
+
+        const isMatch = await verifyPassword(user.password, password);
+        console.log('Do the passwords match?', isMatch);
+
         if (!isMatch) {
-            return res.status(400).send({ error: 'Invalid email or password' });
+            return res.status(400).send({ error: 'Invalid email or password33333' });
         }
 
         const verificationCode = generateVerificationCode();
-        const codeExpiration = new Date(Date.now() + 10 * 60 * 1000); // Code valid for 10 minutes
+        const codeExpiration = new Date(Date.now() + 10 * 60 * 1000);
 
         user.verificationCode = verificationCode;
         user.codeExpiration = codeExpiration;
         await user.save();
 
-        await sendEmailVerificationCode(user.email, verificationCode);
-        await sendTelegramVerificationCode(user.chatId, verificationCode); // Send Telegram verification code
+        await sendTelegramVerificationCode(user.chatId, verificationCode);
 
         res.status(200).send({ message: "Verification code sent to email and Telegram." });
 
@@ -112,9 +100,10 @@ router.post('/login', [
     }
 });
 
-router.post('/verify-code', [
+// Route to validate the verification code
+router.post('/login-validation', [
     body('email').isEmail().withMessage('Please provide a valid email'),
-    body('code').notEmpty().withMessage('Verification code is required')
+    body('verificationCode').notEmpty().withMessage('Verification code is required')
 ], async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -122,20 +111,24 @@ router.post('/verify-code', [
     }
 
     try {
-        const { email, code } = req.body;
+        const { email, verificationCode } = req.body;
+
         const user = await User.findOne({ email });
 
-        if (!user || user.verificationCode !== code || user.codeExpiration < new Date()) {
-            return res.status(400).send({ error: 'Invalid or expired verification code' });
+        if (!user) {
+            return res.status(400).send({ error: 'Invalid email or verification code' });
         }
 
-        const token = jwt.sign(
-            { _id: user._id.toString() },
-            process.env.JWT_SECRET_KEY,
-            { expiresIn: '1h' }
-        );
+        if (user.verificationCode !== verificationCode) {
+            return res.status(400).send({ error: 'Invalid verification code' });
+        }
 
-        res.status(200).send({ user, token, message: "Logged in successfully!" });
+        if (new Date() > user.codeExpiration) {
+            return res.status(400).send({ error: 'Verification code has expired' });
+        }
+
+        // Verification successful
+        res.status(200).send({ message: 'Verification successful' });
 
     } catch (err) {
         res.status(500).send({ error: 'Internal Server Error' });
