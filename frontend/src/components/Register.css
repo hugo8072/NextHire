@@ -1,0 +1,46 @@
+.register-container {
+  text-align: center;
+  color: #333; /* Replace with your previous color */
+}
+
+form {
+  display: inline-block;
+  text-align: left;
+}
+
+form div {
+  margin-bottom: 10px;
+}
+
+label {
+  display: block;
+  margin-bottom: 5px;
+}
+
+input {
+  width: 100%;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+button {
+  background-color: #28a745; /* Green color */
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+button:hover {
+  background-color: #218838; /* Darker green on hover */
+}
+
+.errors {
+  color: red;
+}
+
+.button-container {
+  display: flex;
+  justify-content: center;
+}
