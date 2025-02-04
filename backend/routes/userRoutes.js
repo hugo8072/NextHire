@@ -26,31 +26,40 @@ router.post('/register', [
 ], async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+        console.log('Validation errors:', errors.array());
         return res.status(400).json({ errors: errors.array() });
     }
 
     try {
         const { name, email, password, phoneNumber, chatId } = req.body;
+        console.log('Received data:', { name, email, password, phoneNumber, chatId });
 
         const existingUser = await User.findOne({ email });
         if (existingUser) {
+            console.log('User with this email already exists');
             return res.status(400).send({ error: 'User with this email already exists' });
         }
 
         const hashedPassword = await hashPassword(password);
+        console.log('Hashed password:', hashedPassword);
 
         const verificationCode = generateVerificationCode();
         const codeExpiration = new Date(Date.now() + 10 * 60 * 1000);
+        console.log('Generated verification code:', verificationCode);
 
         const user = new User({ name, email, password: hashedPassword, phoneNumber, chatId, verificationCode, codeExpiration });
-        console.log('Stored hashed password of user: on register:', hashedPassword);
+        console.log('User object before saving:', user);
+
         await user.save();
+        console.log('User saved to database');
 
         await sendTelegramVerificationCode(chatId, verificationCode);
+        console.log('Verification code sent to Telegram');
 
         res.status(201).send({ user, message: "User created successfully! Verification code sent to email and Telegram." });
 
     } catch (err) {
+        console.error('Error during registration:', err);
         res.status(500).send({ error: 'Internal Server Error' });
     }
 });

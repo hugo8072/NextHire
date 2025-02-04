@@ -1,0 +1,38 @@
+.home-container {
+  background-color: beige;
+  text-align: center;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+h1 {
+  color: #333;
+}
+
+h2 {
+  color: #666;
+}
+
+.button-container {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.button-container button {
+  background-color: green; /* Cor verde */
+  color: white; /* Cor do texto */
+  padding: 10px 20px; /* Espaciamento interno */
+  border: none; /* Remove borda padrão */
+  border-radius: 5px; /* Cantos arredondados */
+  cursor: pointer; /* Indica que é clicável */
+  font-size: 16px; /* Tamanho da fonte */
+}
+
+.button-container button:hover {
+  background-color: darkgreen; /* Cor verde mais escura ao passar o mouse */
+}
