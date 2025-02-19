@@ -5,8 +5,8 @@ import './Home.css';
 function Home() {
   const navigate = useNavigate();
 
-  const handleRegisterClick = () => {
-    navigate('/user/register');
+  const handleNavigationClick = (path) => {
+    navigate(path);
   };
 
   return (
@@ -19,8 +19,8 @@ function Home() {
         <img src="https://via.placeholder.com/150" alt="Job 3" />
       </div>
       <div className="button-container">
-        <button>Login</button>
-        <button onClick={handleRegisterClick}>Register</button>
+        <button onClick={() => handleNavigationClick('/users/login')}>Login</button>
+        <button onClick={() => handleNavigationClick('/user/register')}>Register</button>
       </div>
     </div>
   );

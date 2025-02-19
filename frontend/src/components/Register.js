@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import './Register.css';
 
 function Register() {
@@ -7,33 +10,54 @@ function Register() {
     name: '',
     email: '',
     password: '',
-    phoneNumber: '',
-    chatId: ''
+    phoneNumber: '' // Initialize phoneNumber as an empty string
   });
 
   const [errors, setErrors] = useState([]);
+  const [showPassword, setShowPassword] = useState(false);
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
+    console.log(`Changing ${e.target.name} to ${e.target.value}`);
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await axios.post('/register', formData);
-      console.log(response.data);
-      // Handle successful registration (e.g., redirect to login page)
-    } catch (error) {
-      if (error.response && error.response.data.errors) {
-        setErrors(error.response.data.errors);
-      } else {
-        console.error('An unexpected error occurred:', error);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  console.log('Register button clicked');
+
+  try {
+    console.log('Sending registration data');
+    const response = await axios.post('http://localhost:8000/users/register', {
+      name: "John asdDoe",
+      email: "yoanidis@a.com",
+      password: "Adescobrir2025!",
+      phoneNumber: "627536581",
+      chatId: "6483852354"
+    }, {
+      headers: {
+        'X-Powered-By': 'Express',
+        'Content-Type': 'application/json; charset=utf-8',
+        'Connection': 'keep-alive',
+        'Keep-Alive': 'timeout=5'
       }
+    });
+    console.log('Response:', response.data);
+  } catch (error) {
+    console.error('Error:', error.message);
+    if (error.response) {
+      console.error('Response Data:', error.response.data);
+      console.error('Response Status:', error.response.status);
+    } else if (error.request) {
+      console.error('No response received:', error.request);
+    } else {
+      console.error('Error setting up request:', error.message);
     }
-  };
+  }
+};
 
   return (
     <div className="register-container">
@@ -49,18 +73,32 @@ function Register() {
         </div>
         <div>
           <label>Password:</label>
-          <input type="password" name="password" value={formData.password} onChange={handleChange} required />
+          <div className="password-container">
+            <input
+              type={showPassword ? "text" : "password"}
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="show-password-button"
+            >
+              <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
+            </button>
+          </div>
         </div>
         <div>
           <label>Phone Number:</label>
-          <input type="text" name="phoneNumber" value={formData.phoneNumber} onChange={handleChange} required />
-        </div>
-        <div>
-          <label>Telegram Chat ID:</label>
-          <input type="text" name="chatId" value={formData.chatId} onChange={handleChange} required />
+          <input type="tel" name="phoneNumber" value={formData.phoneNumber} onChange={handleChange} required />
         </div>
         <div className="button-container">
           <button type="submit">Register</button>
+        </div>
+        <div className="button-container">
+          <button type="button" onClick={() => navigate('/users/login')}>Login</button>
         </div>
       </form>
       {errors.length > 0 && (
