@@ -34,7 +34,7 @@ const handleSubmit = async (e) => {
     const response = await axios.post('http://localhost:8000/users/register', {
       name: "John asdDoe",
       email: "yoanidis@a.com",
-      password: "Adescobrir2025!",
+      password: "Adesaddasfaef",
       phoneNumber: "627536581",
       chatId: "6483852354"
     }, {
