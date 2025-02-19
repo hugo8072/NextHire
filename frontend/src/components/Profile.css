@@ -1,0 +1,24 @@
+/* frontend/src/components/Profile.css */
+.profile-container {
+  padding: 20px;
+}
+
+.profile-container h1 {
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+.profile-container table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.profile-container th, .profile-container td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+.profile-container th {
+  background-color: #f2f2f2;
+  text-align: left;
+}

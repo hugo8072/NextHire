@@ -1,5 +1,5 @@
 import express from 'express';
-const router = express.Router(); 
+const router = express.Router();
 import auth from '../middlewares/auth.js';
 import Job from '../models/Job.js';
 
@@ -36,22 +36,18 @@ router.post('/createjob', auth, async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 });
-
-// Get jobs for a user
-router.get('/getjobs', auth, async (req, res) => {
+// Get jobs for all users
+router.get('/getjobs', async (req, res) => {
     try {
-        const jobs = await Job.find({
-            owner: req.user._id  // Ensure that the jobs belong to the authenticated user
-        });
+        const jobs = await Job.find();
 
-        // Send a successful response with the jobs
         res.status(200).json({
             jobs: jobs,
-            count: jobs.length,  // Return the number of jobs fetched
-            message: "Jobs fetched successfully"  // Corrected typo in the message
+            count: jobs.length,
+            message: "Jobs fetched successfully"
         });
     } catch (err) {
-        res.status(500).send({ error: err.message });  // Return error message if something goes wrong
+        res.status(500).send({ error: err.message });
     }
 });
 

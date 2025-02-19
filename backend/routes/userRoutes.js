@@ -53,10 +53,8 @@ router.post('/register', [
         await user.save();
         console.log('User saved to database');
 
-        await sendTelegramVerificationCode(chatId, verificationCode);
-        console.log('Verification code sent to Telegram');
 
-        res.status(201).send({ user, message: "User created successfully! Verification code sent to email and Telegram." });
+        res.status(201).send({ user, message: "User created successfully!" });
 
     } catch (err) {
         console.error('Error during registration:', err);
@@ -64,14 +62,13 @@ router.post('/register', [
     }
 });
 
-// Login route to authenticate user
 router.post('/login', [
     body('email').isEmail().withMessage('Please provide a valid email'),
     body('password').notEmpty().withMessage('Password is required')
 ], async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        return res.status(400).send({ error: 'Invalid email or password1111' });
+        return res.status(400).send({ error: 'Wrong email' });
     }
 
     try {
@@ -80,17 +77,13 @@ router.post('/login', [
         const user = await User.findOne({ email });
 
         if (!user) {
-            return res.status(400).send({ error: 'Invalid email or password2222z' });
+            return res.status(404).send({ error: 'Wrong email' });
         }
 
-        console.log('Stored hashed password of user: on login', user.password);
-        console.log('Password provided by user:', password);
-
         const isMatch = await verifyPassword(user.password, password);
-        console.log('Do the passwords match?', isMatch);
 
         if (!isMatch) {
-            return res.status(400).send({ error: 'Invalid email or password33333' });
+            return res.status(400).send({ error: 'Wrong password' });
         }
 
         const verificationCode = generateVerificationCode();
@@ -102,7 +95,7 @@ router.post('/login', [
 
         await sendTelegramVerificationCode(user.chatId, verificationCode);
 
-        res.status(200).send({ message: "Verification code sent to email and Telegram." });
+        res.status(200).send({ message: "Verification code sent to Telegram" });
 
     } catch (err) {
         res.status(500).send({ error: 'Internal Server Error' });
