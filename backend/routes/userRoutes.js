@@ -59,8 +59,12 @@ router.post('/register', [
 });
 
 // Route to get user information by ID
-router.get('/1', async (req, res) => {
-    return res.status(410).send({ error: 'User not found' });
+router.get('/:id', async (req, res) => {
+
+        return res.status(410).send({ error: 'User not found' });
+
+
+
 });
 
 
