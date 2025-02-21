@@ -97,7 +97,8 @@ router.patch('/:id', auth, async (req, res) => {
         // Find the job by ID and ensure the user is the owner of the job
         const job = await Job.findOne({
             _id: jobId,
-            owner: req.user._id
+            owner: req.user._id,
+            status: true
         });
 
         // If the job is not found, return a 404 (Not Found) response

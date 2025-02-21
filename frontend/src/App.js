@@ -14,7 +14,7 @@ function App() {
         <Route path="/users/register" element={<Register />} />
         <Route path="/users/login" element={<Login />} />
         <Route path="/users/verification" element={<Verification />} />
-        <Route path="/user/:userId/profile" element={<Profile />} /> {/* Add the Profile route */}
+        <Route path="/users/:userId/profile" element={<Profile />} /> {/* Add the Profile route */}
         {/* Add other routes here */}
       </Routes>
     </Router>

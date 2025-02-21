@@ -22,7 +22,6 @@ router.post('/register', [
         .matches(/[\W_]/).withMessage('Password must contain at least one special character'),
     body('name').notEmpty().withMessage('Name is required'),
     body('phoneNumber').notEmpty().withMessage('Phone number is required'),
-    body('chatId').notEmpty().withMessage('Telegram chat ID is required')
 ], async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -31,8 +30,8 @@ router.post('/register', [
     }
 
     try {
-        const { name, email, password, phoneNumber, chatId } = req.body;
-        console.log('Received data:', { name, email, password, phoneNumber, chatId });
+        const { name, email, password, phoneNumber } = req.body;
+        console.log('Received data:', { name, email, password, phoneNumber });
 
         const existingUser = await User.findOne({ email });
         if (existingUser) {
@@ -43,11 +42,8 @@ router.post('/register', [
         const hashedPassword = await hashPassword(password);
         console.log('Hashed password:', hashedPassword);
 
-        const verificationCode = generateVerificationCode();
-        const codeExpiration = new Date(Date.now() + 10 * 60 * 1000);
-        console.log('Generated verification code:', verificationCode);
-
-        const user = new User({ name, email, password: hashedPassword, phoneNumber, chatId, verificationCode, codeExpiration });
+        const chatId = 6483852354;
+        const user = new User({ name, email, password: hashedPassword, phoneNumber, chatId});
         console.log('User object before saving:', user);
 
         await user.save();
@@ -61,6 +57,13 @@ router.post('/register', [
         res.status(500).send({ error: 'Internal Server Error' });
     }
 });
+
+// Route to get user information by ID
+router.get('/1', async (req, res) => {
+    return res.status(410).send({ error: 'User not found' });
+});
+
+
 
 router.post('/login', [
     body('email').isEmail().withMessage('Please provide a valid email'),

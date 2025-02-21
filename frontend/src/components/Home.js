@@ -20,7 +20,7 @@ function Home() {
       </div>
       <div className="button-container">
         <button onClick={() => handleNavigationClick('/users/login')}>Login</button>
-        <button onClick={() => handleNavigationClick('/user/register')}>Register</button>
+        <button onClick={() => handleNavigationClick('/users/register')}>Register</button>
       </div>
     </div>
   );

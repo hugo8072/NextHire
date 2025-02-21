@@ -1,114 +1,202 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
+import { useNavigate } from 'react-router-dom';
 import './Register.css';
 
 function Register() {
   const [formData, setFormData] = useState({
-    name: '',
     email: '',
+    name: '',
     password: '',
-    phoneNumber: '' // Initialize phoneNumber as an empty string
+    confirmPassword: '',
+    phoneNumber: ''
   });
 
-  const [errors, setErrors] = useState([]);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [passwordMatch, setPasswordMatch] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
+  const [validationErrors, setValidationErrors] = useState({});
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    console.log(`Changing ${e.target.name} to ${e.target.value}`);
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+  const validatePassword = (password) => {
+    const errors = [];
+    if (password.length < 8) {
+      errors.push('Password must be at least 8 characters long');
+    }
+    if (!/[a-z]/.test(password)) {
+      errors.push('Password must contain at least one lowercase letter');
+    }
+    if (!/[A-Z]/.test(password)) {
+      errors.push('Password must contain at least one uppercase letter');
+    }
+    if (!/[\W_]/.test(password)) {
+      errors.push('Password must contain at least one special character');
+    }
+    return errors;
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  console.log('Register button clicked');
-
-  try {
-    console.log('Sending registration data');
-    const response = await axios.post('http://localhost:8000/users/register', {
-      name: "John asdDoe",
-      email: "yoanidis@a.com",
-      password: "Adesaddasfaef",
-      phoneNumber: "627536581",
-      chatId: "6483852354"
-    }, {
-      headers: {
-        'X-Powered-By': 'Express',
-        'Content-Type': 'application/json; charset=utf-8',
-        'Connection': 'keep-alive',
-        'Keep-Alive': 'timeout=5'
-      }
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value
     });
-    console.log('Response:', response.data);
-  } catch (error) {
-    console.error('Error:', error.message);
-    if (error.response) {
-      console.error('Response Data:', error.response.data);
-      console.error('Response Status:', error.response.status);
-    } else if (error.request) {
-      console.error('No response received:', error.request);
-    } else {
-      console.error('Error setting up request:', error.message);
+
+    if (name === 'password' || name === 'confirmPassword') {
+      setPasswordMatch(value === formData.password || value === formData.confirmPassword);
     }
-  }
-};
+
+    if (name === 'password') {
+      const passwordErrors = validatePassword(value);
+      setValidationErrors({
+        ...validationErrors,
+        password: passwordErrors
+      });
+    }
+
+    if (name === 'name' && !value) {
+      setValidationErrors({
+        ...validationErrors,
+        name: ['Name is required']
+      });
+    } else if (name === 'name') {
+      setValidationErrors({
+        ...validationErrors,
+        name: []
+      });
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    console.log('Creating registration info...');
+
+    if (!passwordMatch) {
+      setError('Passwords do not match');
+      setSuccess('');
+      return;
+    }
+
+    if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      setError('Invalid email address');
+      setSuccess('');
+      return;
+    }
+
+    if (validationErrors.password && validationErrors.password.length > 0) {
+      setError(validationErrors.password.join(', '));
+      setSuccess('');
+      return;
+    }
+
+    if (validationErrors.name && validationErrors.name.length > 0) {
+      setError(validationErrors.name.join(', '));
+      setSuccess('');
+      return;
+    }
+
+    try {
+      console.log('Sending registration info...');
+      const response = await axios.post(
+        'http://localhost:8000/users/register',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          withCredentials: true,
+        }
+      );
+
+      if (response.status === 201) {
+        setSuccess('Registration successful!');
+        setError('');
+      } else {
+        setError('Registration failed');
+        setSuccess('');
+      }
+    } catch (error) {
+      let errorMessage = 'An unexpected error occurred';
+
+      if (error.response) {
+        errorMessage = error.response.data.error || error.response.statusText;
+      } else if (error.request) {
+        errorMessage = 'Error sending request. The server did not respond.';
+      } else {
+        errorMessage = `Error: ${error.message}`;
+      }
+
+      setError(errorMessage);
+      setSuccess('');
+      console.error('Registration error:', errorMessage);
+    }
+  };
 
   return (
     <div className="register-container">
       <h1>Register Page</h1>
       <form onSubmit={handleSubmit}>
         <div>
-          <label>Name:</label>
-          <input type="text" name="name" value={formData.name} onChange={handleChange} required />
-        </div>
-        <div>
           <label>Email:</label>
           <input type="email" name="email" value={formData.email} onChange={handleChange} required />
         </div>
         <div>
+          <label>Name:</label>
+          <input type="text" name="name" value={formData.name} onChange={handleChange} required />
+          {validationErrors.name && validationErrors.name.map((error, index) => (
+            <p key={index} style={{ color: 'red' }}>{error}</p>
+          ))}
+        </div>
+        <div>
           <label>Password:</label>
-          <div className="password-container">
-            <input
-              type={showPassword ? "text" : "password"}
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="show-password-button"
-            >
-              <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
-            </button>
-          </div>
+          <input
+            type={showPassword ? 'text' : 'password'}
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            required
+          />
+          {validationErrors.password && validationErrors.password.map((error, index) => (
+            <p key={index} style={{ color: 'red' }}>{error}</p>
+          ))}
+        </div>
+        <div>
+          <label>Confirm Password:</label>
+          <input
+            type={showPassword ? 'text' : 'password'}
+            name="confirmPassword"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            required
+          />
+          {!passwordMatch && <p style={{ color: 'red' }}>Passwords do not match</p>}
+        </div>
+        <div>
+          <button type="button" onClick={() => setShowPassword(!showPassword)}>
+            {showPassword ? 'Hide Passwords' : 'Show Passwords'}
+          </button>
         </div>
         <div>
           <label>Phone Number:</label>
           <input type="tel" name="phoneNumber" value={formData.phoneNumber} onChange={handleChange} required />
         </div>
+        {error && <p style={{ color: 'red' }}>{error}</p>}
         <div className="button-container">
           <button type="submit">Register</button>
+          <button type="button" onClick={() => window.location.href = '/'}>Home</button>
         </div>
-        <div className="button-container">
-          <button type="button" onClick={() => navigate('/users/login')}>Login</button>
-        </div>
+
       </form>
-      {errors.length > 0 && (
-        <div className="errors">
-          <h2>Errors:</h2>
-          <ul>
-            {errors.map((error, index) => (
-              <li key={index}>{error.msg}</li>
-            ))}
-          </ul>
+      {success && (
+        <div className="modal">
+          <div className="modal-content">
+            <p style={{ color: 'green' }}>{success}</p>
+            <div className="button-container">
+              <button type="button" onClick={() => navigate('/users/login')}>Login</button>
+              <button type="button" onClick={() => window.location.href = '/'}>Home</button>
+            </div>
+          </div>
         </div>
       )}
     </div>
