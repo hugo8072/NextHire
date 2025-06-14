@@ -1,47 +1,77 @@
-/* Profile.css */
 .profile-container {
+  background-color: beige;
+  color: #333;
   padding: 20px;
+  border-radius: 10px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-.profile-container h1 {
-  font-size: 24px;
-  margin-bottom: 20px;
-}
-
-.profile-container table {
+.profile-table {
   width: 100%;
-  border-collapse: collapse;
+  max-width: 950px;
+  background: #fff;
+  color: #333;
+  border-radius: 6px;
+  border-collapse: separate;
+  border-spacing: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  font-size: 14px;
+  margin: 0 auto;
 }
 
-.profile-container th, .profile-container td {
-  border: 1px solid #ddd;
-  padding: 8px;
+.profile-table th, .profile-table td {
+  padding: 7px 10px;
+  border-bottom: 1px solid #ddd;
 }
 
-.profile-container th {
-  background-color: #f2f2f2;
-  text-align: left;
-}
-
-/* Estilo dos campos de entrada na última linha */
-.profile-container input[type="text"],
-.profile-container input[type="date"],
-.profile-container input[type="checkbox"] {
-  width: 100%;
-  padding: 5px;
-  border: 1px solid #ccc;
+.profile-input, .profile-table select {
+  background: #fff;
+  color: #333;
+  border: 1px solid #bbb;
   border-radius: 3px;
+  padding: 3px 6px;
+  font-size: 13px;
 }
 
-.profile-container button {
-  padding: 8px 16px;
-  background-color: #007bff;
+.profile-checkbox {
+  accent-color: #28a745;
+  width: 15px;
+  height: 15px;
+}
+
+.profile-btn {
+  background-color: #28a745;
   color: white;
   border: none;
-  border-radius: 3px;
+  border-radius: 5px;
   cursor: pointer;
+  padding: 7px 16px;
+  font-size: 16px;
+  margin-right: 4px;
 }
 
-.profile-container button:hover {
-  background-color: #0056b3;
+.profile-btn:hover {
+  background-color: #218838;
+}
+
+.profile-btn-delete {
+  background-color: #b22222;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  padding: 7px 16px;
+  font-size: 16px;
+  margin-left: 2px;
+}
+
+.profile-btn-delete:hover {
+  background-color: #ff3333;
+}
+
+body {
+  background-color: beige !important;
 }

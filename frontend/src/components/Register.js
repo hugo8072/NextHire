@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import './Register.css';
+import RegisterView from './RegisterView';
 
 function Register() {
   const [formData, setFormData] = useState({
@@ -44,7 +44,11 @@ function Register() {
     });
 
     if (name === 'password' || name === 'confirmPassword') {
-      setPasswordMatch(value === formData.password || value === formData.confirmPassword);
+      setPasswordMatch(
+        name === 'password'
+          ? value === formData.confirmPassword
+          : value === formData.password
+      );
     }
 
     if (name === 'password') {
@@ -99,7 +103,7 @@ function Register() {
     try {
       console.log('Sending registration info...');
       const response = await axios.post(
-        'http://localhost:8000/users/register',
+        `${process.env.REACT_APP_API_URL}/users/register`,
         formData,
         {
           headers: {
@@ -134,72 +138,18 @@ function Register() {
   };
 
   return (
-    <div className="register-container">
-      <h1>Register Page</h1>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Email:</label>
-          <input type="email" name="email" value={formData.email} onChange={handleChange} required />
-        </div>
-        <div>
-          <label>Name:</label>
-          <input type="text" name="name" value={formData.name} onChange={handleChange} required />
-          {validationErrors.name && validationErrors.name.map((error, index) => (
-            <p key={index} style={{ color: 'red' }}>{error}</p>
-          ))}
-        </div>
-        <div>
-          <label>Password:</label>
-          <input
-            type={showPassword ? 'text' : 'password'}
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-          />
-          {validationErrors.password && validationErrors.password.map((error, index) => (
-            <p key={index} style={{ color: 'red' }}>{error}</p>
-          ))}
-        </div>
-        <div>
-          <label>Confirm Password:</label>
-          <input
-            type={showPassword ? 'text' : 'password'}
-            name="confirmPassword"
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            required
-          />
-          {!passwordMatch && <p style={{ color: 'red' }}>Passwords do not match</p>}
-        </div>
-        <div>
-          <button type="button" onClick={() => setShowPassword(!showPassword)}>
-            {showPassword ? 'Hide Passwords' : 'Show Passwords'}
-          </button>
-        </div>
-        <div>
-          <label>Phone Number:</label>
-          <input type="tel" name="phoneNumber" value={formData.phoneNumber} onChange={handleChange} required />
-        </div>
-        {error && <p style={{ color: 'red' }}>{error}</p>}
-        <div className="button-container">
-          <button type="submit">Register</button>
-          <button type="button" onClick={() => window.location.href = '/'}>Home</button>
-        </div>
-
-      </form>
-      {success && (
-        <div className="modal">
-          <div className="modal-content">
-            <p style={{ color: 'green' }}>{success}</p>
-            <div className="button-container">
-              <button type="button" onClick={() => navigate('/users/login')}>Login</button>
-              <button type="button" onClick={() => window.location.href = '/'}>Home</button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+    <RegisterView
+      formData={formData}
+      handleChange={handleChange}
+      handleSubmit={handleSubmit}
+      showPassword={showPassword}
+      setShowPassword={setShowPassword}
+      passwordMatch={passwordMatch}
+      validationErrors={validationErrors}
+      error={error}
+      success={success}
+      navigate={navigate}
+    />
   );
 }
 

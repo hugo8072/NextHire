@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
-import './Login.css';
+import LoginView from './LoginView';
 
 function Login() {
   const [formData, setFormData] = useState({
@@ -11,6 +9,7 @@ function Login() {
     password: ''
   });
 
+  const [captchaToken, setCaptchaToken] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -23,13 +22,22 @@ function Login() {
     });
   };
 
+  const handleCaptcha = (token) => {
+    setCaptchaToken(token);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!captchaToken) {
+      setError('Please complete the captcha.');
+      return;
+    }
+
     try {
       const response = await axios.post(
-        'http://localhost:8000/users/login',
-        formData,
+        `${process.env.REACT_APP_API_URL}/users/login`,
+        { ...formData, captchaToken },
         {
           headers: {
             'Content-Type': 'application/json',
@@ -43,7 +51,8 @@ function Login() {
       setError('');
 
       if (response.status === 200) {
-        navigate('/users/verification'); // Use the correct relative path
+        localStorage.setItem('email', formData.email);
+        navigate('/users/verification');
       }
     } catch (error) {
       let errorMessage = 'An unexpected error occurred';
@@ -61,43 +70,22 @@ function Login() {
     }
   };
 
+  const handleHome = () => {
+    navigate('/');
+  };
+
   return (
-    <div className="login-container">
-      <h1>Login Page</h1>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Email:</label>
-          <input type="email" name="email" value={formData.email} onChange={handleChange} required />
-        </div>
-        <div>
-          <label>Password:</label>
-          <div className="password-container">
-            <input
-              type={showPassword ? "text" : "password"}
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="show-password-button"
-            >
-              <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
-            </button>
-          </div>
-        </div>
-        {error && <p style={{ color: 'red' }}>{error}</p>}
-        {success && <p style={{ color: 'green' }}>{success}</p>}
-        <div className="button-container">
-          <button type="submit">Login</button>
-        </div>
-        <div className="button-container">
-          <button type="button" onClick={() => window.location.href = '/'}>Home</button>
-        </div>
-      </form>
-    </div>
+    <LoginView
+      formData={formData}
+      error={error}
+      success={success}
+      showPassword={showPassword}
+      handleChange={handleChange}
+      handleSubmit={handleSubmit}
+      setShowPassword={setShowPassword}
+      handleHome={handleHome}
+      handleCaptcha={handleCaptcha}
+    />
   );
 }
 

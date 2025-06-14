@@ -1,45 +1,57 @@
 import express from 'express';
-const router = express.Router();
-import auth from '../middlewares/auth.js';
+import { body, validationResult } from 'express-validator';
+import { auth, authorizeProfileAccess } from '../middlewares/auth.js';
 import Job from '../models/Job.js';
 
-// Test route to verify if the job routes are working
-router.get('/test', auth, (req, res) => {
-    res.json({
-        message: 'Job routes are working!',
-        user: req.user
-    });
-});
+const router = express.Router();
 
-// Create a job route
-router.post('/createjob', auth, async (req, res) => {
+// Create job route
+router.post('/createjob', auth, [
+    body('Position').trim().escape().notEmpty().withMessage('Position is required'),
+    body('Company').trim().escape().notEmpty().withMessage('Company is required'),
+    body('Phase').optional().trim().escape(), // <-- agora opcional
+    body('CL').isBoolean().withMessage('CL must be a boolean'),
+    body('Status').isBoolean().withMessage('Status must be a boolean'),
+    body('Note').optional().trim().escape(), // <-- agora opcional
+    body('Applied date')
+        .notEmpty().withMessage('Applied date is required')
+        .isISO8601().toDate().withMessage('Applied date must be a valid date')
+], async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+
     try {
-        // Log the request body to the terminal for debugging
-        console.log('Creating a new job:', req.body);
+        // Garante que a data é um objeto Date
+        const jobData = {
+            ...req.body,
+            owner: req.user._id,
+            'Applied date': req.body['Applied date'] ? new Date(req.body['Applied date']) : undefined
+        };
 
-        // Logic to create the job here
-        const job = new Job({
-            ...req.body,   // Destructure the data from the request body
-            owner: req.user._id  // Add the authenticated user's ID as the owner
-        });
+        const job = new Job(jobData);
 
-        await job.save();  // Save the job to the database
-
-        // Log the created job to the terminal
+        await job.save();
         console.log('Job created:', job);
 
-        // Send a successful response
         res.status(201).send({ job, message: "Job created successfully!" });
     } catch (error) {
-        // Log error to the terminal and send a failure response
         console.error('Error creating job:', error);
         res.status(500).json({ message: error.message });
     }
 });
-// Get jobs for all users
-router.get('/getjobs', async (req, res) => {
+
+// Fetch all jobs (only accessible by the master user)
+router.get('/getjobs', auth, async (req, res) => {
     try {
+        if (req.user.role !== 'master') {
+            return res.status(403).json({ message: "Access denied" });
+        }
+
+        console.log('Fetching all jobs...');
         const jobs = await Job.find();
+        console.log('Jobs fetched:', jobs);
 
         res.status(200).json({
             jobs: jobs,
@@ -47,104 +59,94 @@ router.get('/getjobs', async (req, res) => {
             message: "Jobs fetched successfully"
         });
     } catch (err) {
+        console.error('Error fetching jobs:', err);
         res.status(500).send({ error: err.message });
     }
 });
 
-// Fetch job by ID route
-router.get('/:id', auth, async (req, res) => {
-    const jobId = req.params.id; // Corrected "parms" to "params"
+// Fetch jobs by user ID (accessible by the owner or the master user)
+router.get('/:userId', auth, authorizeProfileAccess, async (req, res) => {
+    const userId = req.params.userId;
 
     try {
-        const job = await Job.findOne({
-            _id: jobId,  // Ensure the job ID matches
-            owner: req.user._id  // Ensure that the user is the owner of the job
-        });
-
-        if (!job) {  // If the job is not found, send a 404 response
-            return res.status(404).json({ message: "Job not found" });
+        console.log(`Fetching jobs for user ${userId}...`);
+        const jobs = await Job.find({ owner: userId });
+        if (!jobs || jobs.length === 0) {
+            return res.status(404).json({ error: "No jobs found for this user." });
         }
+        console.log('Jobs fetched:', jobs);
 
-        // Send the found job in the response
-        res.status(200).json({
-            task: job,
-            message: "Job found successfully"
-        });
+        res.status(200).json(jobs); // <-- devolve só o array!
     } catch (err) {
-        res.status(500).send({ error: err.message });  // Send an error message if something goes wrong
+        console.error('Error fetching jobs:', err);
+        res.status(500).json({ error: "Error fetching jobs: " + err.message });
     }
 });
 
 // Update job route
-router.patch('/:id', auth, async (req, res) => {
-    const jobId = req.params.id;  // Extract job ID from the route parameters
-
-    // Get the keys of the fields being updated from the request body
+router.patch('/:id', auth, [
+    body('Phase').optional().trim().escape(),
+    body('Status').optional().isBoolean().withMessage('Status must be a boolean'),
+    body('Note').optional().trim().escape(),
+    body('Position').optional().trim().escape(),
+    body('Applied date').optional().isISO8601().toDate().withMessage('Applied date must be a valid date'),
+    body('Company').optional().trim().escape(),
+    body('CL').optional().isBoolean().withMessage('CL must be a boolean')
+], async (req, res) => {
+    const jobId = req.params.id;
     const updates = Object.keys(req.body);
-
-    // Define which fields are allowed to be updated
-    const allowedUpdates = ['Phase', 'Status', 'Note'];
-
-    // Check if all the fields in the request body are allowed to be updated
+    const allowedUpdates = ['Phase', 'Status', 'Note', 'Position', 'Applied date','CL', 'Company'];
     const isValidOperation = updates.every(update => allowedUpdates.includes(update));
 
-    // If there are invalid fields, return a 400 (Bad Request) response
     if (!isValidOperation) {
         return res.status(400).json({ message: "Invalid updates" });
     }
 
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+
     try {
-        // Find the job by ID and ensure the user is the owner of the job
         const job = await Job.findOne({
             _id: jobId,
-            owner: req.user._id,
-            status: true
+            owner: req.user._id
         });
 
-        // If the job is not found, return a 404 (Not Found) response
         if (!job) {
             return res.status(404).json({ message: "Job not found" });
         }
 
-        // Update the allowed fields with the new values from the request body
         updates.forEach(update => job[update] = req.body[update]);
-
-        // Save the updated job to the database
         await job.save();
 
-        // Return a success message and the updated job
         res.status(200).json({
             message: "Job updated successfully",
             job: job
         });
     } catch (err) {
-        // If an error occurs, return a 500 (Internal Server Error) response with the error message
         res.status(500).send({ error: err.message });
     }
 });
 
 // Delete job route
 router.delete('/:id', auth, async (req, res) => {
-    const jobId = req.params.id;  // Extract the job ID from the route parameters
+    const jobId = req.params.id;
 
     try {
-        // Find and delete the job by ID and ensure the user is the owner
         const job = await Job.findOneAndDelete({
             _id: jobId,
-            owner: req.user._id  // Ensure that the user deleting the job is the owner
+            owner: req.user._id
         });
 
-        // If the job is not found, return a 404 (Not Found) response
         if (!job) {
             return res.status(404).json({ message: "Job not found" });
         }
 
-        // Return a success message
         res.status(200).json({
             message: "Job deleted successfully"
         });
     } catch (err) {
-        // If an error occurs, return a 500 (Internal Server Error) response with the error message
         res.status(500).send({ error: err.message });
     }
 });

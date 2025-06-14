@@ -7,7 +7,8 @@ const userSchema = new mongoose.Schema({
     phoneNumber: { type: String, required: true, trim: true },
     chatId: { type: String, required: true, trim: true },
     verificationCode: { type: String },
-    codeExpiration: { type: Date }
+    codeExpiration: { type: Date },
+    role: { type: String, required: true,enum: ['user', 'master'], default: 'user' },
 });
 
 const User = mongoose.model('User', userSchema);
