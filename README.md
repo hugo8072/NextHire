@@ -19,7 +19,6 @@ NextHire was built with security as a top priority. Here’s what protects your 
 - **Helmet**: Sets secure HTTP headers.
 - **CORS**: Only allows requests from the authorized frontend.
 
-
 ---
 
 ## Features
@@ -27,8 +26,6 @@ NextHire was built with security as a top priority. Here’s what protects your 
 - **Express Server**: Secure API with authentication, rate limiting, 2FA, and attempt tracking.
 - **REST API**: Endpoints for users and job applications.
 - **MongoDB**: NoSQL database for persistence.
-
-
 
 ### Frontend
 - **React**: Modern SPA with protected navigation.
@@ -41,26 +38,19 @@ NextHire was built with security as a top priority. Here’s what protects your 
 ## Environment Variables
 
 ### Backend (`backend/.env`)
-```env
-PORT=8443
-REACT_APP_API_URL=http://localhost:443
-MONGO_URL=mongodb+srv://<username>:<password>@cluster0.8h1re.mongodb.net/
-JWT_SECRET_KEY=your_secret_key
-DB_NAME=job_app_db
-EMAIL_USER=your_email@provider.com
-EMAIL_PASS=your_email_password
-TELEGRAM_BOT_TOKEN=your_telegram_bot_token
-MASTER_EMAIL=your_admin_email@provider.com
-RECAPTCHA_SECRET_KEY=your_recaptcha_secret
-REDIS_HOST=127.0.0.1
-REDIS_PORT=6379
-```
+- `PORT`: Port for the backend server (e.g., 8443)
+- `REACT_APP_API_URL`: API URL for frontend-backend communication
+- `MONGO_URL`: MongoDB connection string
+- `JWT_SECRET_KEY`: Secret for JWT authentication
+- `DB_NAME`: MongoDB database name
+- `EMAIL_USER` / `EMAIL_PASS`: Credentials for sending emails
+- `TELEGRAM_BOT_TOKEN`: Telegram bot token for admin alerts
+- `MASTER_EMAIL`: Admin email address
+- `RECAPTCHA_SECRET_KEY`: Google Recaptcha secret key
 
 ### Frontend (`frontend/.env`)
-```env
-REACT_APP_API_URL=http://localhost:8443
-REACT_APP_RECAPTCHA_SITE_KEY=your_recaptcha_site_key
-```
+- `REACT_APP_API_URL`: Backend API URL
+- `REACT_APP_RECAPTCHA_SITE_KEY`: Google Recaptcha site key
 
 > **Note:** Never commit real secrets or production credentials to public repositories. The above are example keys/values.
 
@@ -85,10 +75,6 @@ REACT_APP_RECAPTCHA_SITE_KEY=your_recaptcha_site_key
 
 ### Input Blocked (Malicious Input)
 ![Input Blocked](imgs/9.png)
-
----
-
-
 
 ---
 
@@ -128,13 +114,7 @@ imgs/               # Screenshots for documentation
     cd backend && npm install
     cd ../frontend && npm install
     ```
-3. Create the `.env` file in `backend/`:
-    ```dotenv
-    PORT=8000
-    MONGO_URL=mongodb+srv://<username>:<password>@cluster0.mongodb.net/
-    JWT_SECRET_KEY=your_secret_key
-    DB_NAME=job_app_db
-    ```
+3. Create the `.env` files in `backend/` and `frontend/` as described above.
 
 ### Running
 - **Backend:**
