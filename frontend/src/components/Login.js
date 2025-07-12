@@ -1,90 +1,130 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import LoginView from './LoginView';
 
+/**
+ * Login Container Component - Manages user authentication logic and state
+ * Handles form validation, API calls, and state management for user login
+ * Passes data and handlers to LoginView component for presentation
+ * @returns {JSX.Element} LoginView component with all required props
+ */
 function Login() {
+  /**
+   * Form data state containing email and password
+   * @type {Object}
+   * @property {string} email - User's email address
+   * @property {string} password - User's password
+   */
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
 
+  /**
+   * reCAPTCHA token state
+   * @type {string}
+   */
   const [captchaToken, setCaptchaToken] = useState('');
+
+  /**
+   * Error message state for displaying login errors
+   * @type {string}
+   */
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+
+  /**
+   * Loading state for form submission
+   * @type {boolean}
+   */
+  const [loading, setLoading] = useState(false);
+
+  /**
+   * Navigation hook for programmatic routing
+   * @type {Function}
+   */
   const navigate = useNavigate();
 
+  /**
+   * Handles form input changes
+   * Updates the formData state when user types in input fields
+   * @param {Event} e - The input change event
+   */
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
-  const handleCaptcha = (token) => {
+  /**
+   * Handles reCAPTCHA token change
+   * Updates the captchaToken state when user completes reCAPTCHA
+   * @param {string} token - The reCAPTCHA token
+   */
+  const handleCaptchaChange = (token) => {
     setCaptchaToken(token);
   };
 
+  /**
+   * Handles form submission for user login
+   * Validates form data, sends login request to backend,
+   * and redirects to verification page on success
+   * @param {Event} e - The form submit event
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!captchaToken) {
-      setError('Please complete the captcha.');
-      return;
-    }
+    setLoading(true);
+    setError('');
 
     try {
+      // Send login request to backend
       const response = await axios.post(
         `${process.env.REACT_APP_API_URL}/users/login`,
-        { ...formData, captchaToken },
+        {
+          email: formData.email,
+          password: formData.password,
+          captchaToken: captchaToken
+        },
         {
           headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/json'
           },
-          withCredentials: true,
+          withCredentials: true
         }
       );
 
-      const successMessage = response.status === 200 ? 'Login successful!' : 'Login failed';
-      setSuccess(successMessage);
-      setError('');
-
+      // Handle successful login response
       if (response.status === 200) {
+        // Store user email in localStorage for verification step
         localStorage.setItem('email', formData.email);
+        
+        // Navigate to verification page
         navigate('/users/verification');
       }
     } catch (error) {
-      let errorMessage = 'An unexpected error occurred';
-
-      if (error.response) {
-        errorMessage = error.response.data.error || error.response.statusText;
-      } else if (error.request) {
-        errorMessage = 'Error sending request. The server did not respond.';
+      // Handle login errors
+      if (error.response?.data?.error) {
+        setError(error.response.data.error);
       } else {
-        errorMessage = `Error: ${error.message}`;
+        setError('Login failed. Please try again.');
       }
-
-      setError(errorMessage);
-      setSuccess('');
+    } finally {
+      setLoading(false);
     }
-  };
-
-  const handleHome = () => {
-    navigate('/');
   };
 
   return (
     <LoginView
       formData={formData}
-      error={error}
-      success={success}
-      showPassword={showPassword}
       handleChange={handleChange}
+      captchaToken={captchaToken}
+      handleCaptchaChange={handleCaptchaChange}
+      error={error}
+      loading={loading}
       handleSubmit={handleSubmit}
-      setShowPassword={setShowPassword}
-      handleHome={handleHome}
-      handleCaptcha={handleCaptcha}
+      navigate={navigate}
     />
   );
 }

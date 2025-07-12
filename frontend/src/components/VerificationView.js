@@ -2,6 +2,19 @@ import React from 'react';
 import { Box, Button, Typography, Stack, Paper, TextField } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
 
+/**
+ * VerificationView Component - Presentational component for email verification interface
+ * Displays verification form with code input field in a futuristic design
+ * This is a pure presentational component that receives all data and handlers as props
+ * @param {Object} props - The component props
+ * @param {Object} props.formData - Verification form data containing verification code
+ * @param {string} props.error - Error message for display
+ * @param {string} props.success - Success message for display
+ * @param {Function} props.handleChange - Handler for form field changes
+ * @param {Function} props.handleSubmit - Handler for form submission
+ * @param {Function} props.handleHome - Handler for home navigation
+ * @returns {JSX.Element} Rendered verification view component
+ */
 function VerificationView({
   formData,
   error,
@@ -23,6 +36,7 @@ function VerificationView({
         justifyContent: 'center',
       }}
     >
+      {/* CSS keyframes for animated gradient background */}
       <style>
         {`
           @keyframes gradientBG {
@@ -32,6 +46,8 @@ function VerificationView({
           }
         `}
       </style>
+      
+      {/* Main verification form container */}
       <Paper
         elevation={16}
         sx={{
@@ -53,6 +69,7 @@ function VerificationView({
             borderRadius: 6,
           }}
         >
+          {/* Application title */}
           <Typography
             variant="h3"
             sx={{
@@ -65,11 +82,17 @@ function VerificationView({
           >
             NextHire
           </Typography>
+          
+          {/* Verification instructions */}
           <Typography variant="h6" sx={{ color: '#00ff99', mb: 2, textShadow: '0 0 8px #00ff99' }}>
-            Enter your verification code
+            Code sent to your telegram.<br />
+            Please, enter your verification code.<br />
           </Typography>
+          
+          {/* Verification form */}
           <form onSubmit={handleSubmit} style={{ width: '100%' }}>
             <Stack spacing={2}>
+              {/* Verification code input field */}
               <TextField
                 label="Verification Code"
                 name="verificationCode"
@@ -95,8 +118,14 @@ function VerificationView({
                   style: { paddingLeft: 18 }
                 }}
               />
+              
+              {/* Error message display */}
               {error && <Typography color="error">{error}</Typography>}
+              
+              {/* Success message display */}
               {success && <Typography color="success.main">{success}</Typography>}
+              
+              {/* Verify button */}
               <Button
                 type="submit"
                 variant="contained"
@@ -119,6 +148,8 @@ function VerificationView({
               >
                 Verify
               </Button>
+              
+              {/* Home navigation button */}
               <Button
                 variant="outlined"
                 startIcon={<HomeIcon />}

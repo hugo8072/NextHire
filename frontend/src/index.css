@@ -1,19 +1,384 @@
-/* Autofill fix for dark theme */
+/* Global Styles - NextHire Job Application Assistant
+ * Provides consistent base styling, resets, and theme foundation
+ * Optimized for modern browsers with Firefox compatibility
+ */
+
+/* ==============================================
+   GLOBAL RESET & BASE
+   ============================================== */
+
+/* Universal reset */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Root and body setup */
+html {
+  height: 100%;
+  font-size: 16px;
+  background: #0f2027 !important;
+  background-color: #0f2027 !important;
+  scroll-behavior: smooth;
+}
+
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: #0f2027 !important;
+  background-color: #0f2027 !important;
+  font-family: 'Inter', 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  font-weight: 400;
+  line-height: 1.6;
+  color: #ffffff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+/* React root container */
+#root {
+  min-height: 100vh;
+  width: 100vw;
+  background: #0f2027 !important;
+  background-color: #0f2027 !important;
+  position: relative;
+  isolation: isolate;
+}
+
+/* ==============================================
+   TYPOGRAPHY & FONTS
+   ============================================== */
+
+/* Font loading optimization */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Orbitron:wght@400;700;900&display=swap');
+
+/* Typography hierarchy */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Orbitron', monospace;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #00ff99;
+  margin: 0;
+}
+
+p, span, div {
+  font-family: 'Inter', sans-serif;
+  color: #ffffff;
+}
+
+/* ==============================================
+   FIREFOX SPECIFIC FIXES
+   ============================================== */
+
+/* Firefox compatibility layer */
+@-moz-document url-prefix() {
+  html, body, #root {
+    background: #0f2027 !important;
+    background-color: #0f2027 !important;
+  }
+  
+  /* Fix gradient rendering issues */
+  * {
+    background-clip: padding-box;
+  }
+}
+
+/* ==============================================
+   SCROLLBAR STYLING
+   ============================================== */
+
+/* Webkit browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(15, 32, 39, 0.8);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #00ff99 0%, #232526 100%);
+  border-radius: 4px;
+  transition: background 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #232526 0%, #00ff99 100%);
+}
+
+::-webkit-scrollbar-corner {
+  background: #0f2027;
+}
+
+/* Firefox scrollbar */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: #00ff99 rgba(15, 32, 39, 0.8);
+}
+
+/* ==============================================
+   FORM ELEMENTS & INPUTS
+   ============================================== */
+
+/* Input autofill dark theme fix */
 input:-webkit-autofill,
 input:-webkit-autofill:focus,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 1000px #11221b inset !important;
-  box-shadow: 0 0 0 1000px #11221b inset !important;
+  -webkit-box-shadow: 0 0 0 1000px #232526 inset !important;
+  box-shadow: 0 0 0 1000px #232526 inset !important;
   -webkit-text-fill-color: #1de9b6 !important;
   caret-color: #1de9b6 !important;
-  border-radius: 6px;
+  border-radius: 8px;
   transition: background-color 5000s ease-in-out 0s;
 }
 
-/* Remove default margin/padding for body */
-body {
-  margin: 0;
+/* Input focus states */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: 2px solid #00ff99;
+  outline-offset: 2px;
+}
+
+/* Button reset */
+button {
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+button:focus {
+  outline: 2px solid #00ff99;
+  outline-offset: 2px;
+}
+
+/* ==============================================
+   ANIMATIONS & TRANSITIONS
+   ============================================== */
+
+/* Disable animations for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Global page transition */
+.page-enter {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: all 0.3s ease-out;
+}
+
+.page-exit {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.page-exit-active {
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: all 0.3s ease-in;
+}
+
+/* ==============================================
+   UTILITY CLASSES
+   ============================================== */
+
+/* Accessibility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
   padding: 0;
-  background: #101820;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Layout utilities */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.text-center {
+  text-align: center;
+}
+
+/* Theme colors as CSS variables */
+:root {
+  --primary-bg: #0f2027;
+  --secondary-bg: #232526;
+  --accent-color: #00ff99;
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.8);
+  --border-color: rgba(0, 255, 153, 0.3);
+  --shadow-primary: 0 8px 32px rgba(0, 255, 153, 0.2);
+  --gradient-primary: linear-gradient(120deg, #0f2027, #232526, #0f2027);
+  --gradient-accent: linear-gradient(90deg, #00ff99, #00ffcc);
+}
+
+/* ==============================================
+   RESPONSIVE BREAKPOINTS
+   ============================================== */
+
+/* Mobile devices */
+@media (max-width: 480px) {
+  html {
+    font-size: 14px;
+  }
+  
+  .container {
+    padding: 0 0.5rem;
+  }
+}
+
+/* Tablets */
+@media (min-width: 481px) and (max-width: 768px) {
+  html {
+    font-size: 15px;
+  }
+}
+
+/* Desktop */
+@media (min-width: 769px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+/* Large screens */
+@media (min-width: 1200px) {
+  html {
+    font-size: 18px;
+  }
+}
+
+/* ==============================================
+   PRINT STYLES
+   ============================================== */
+
+@media print {
+  * {
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+  
+  body {
+    font-size: 12pt;
+    line-height: 1.4;
+  }
+}
+
+/* ==============================================
+   LOADING STATES
+   ============================================== */
+
+/* Global loading overlay */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: var(--primary-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+/* Loading spinner */
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 3px solid rgba(0, 255, 153, 0.1);
+  border-top: 3px solid var(--accent-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ==============================================
+   COMPONENT OVERRIDES
+   ============================================== */
+
+/* Material-UI overrides */
+.MuiPaper-root {
+  background-color: var(--secondary-bg) !important;
+}
+
+.MuiButton-root {
+  text-transform: none !important;
+}
+
+/* React Router transitions */
+.router-wrapper {
+  position: relative;
+  min-height: 100vh;
+}
+
+/* ==============================================
+   PERFORMANCE OPTIMIZATIONS
+   ============================================== */
+
+/* GPU acceleration for smooth animations */
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Optimize rendering */
+img {
+  max-width: 100%;
+  height: auto;
+  vertical-align: middle;
+}
+
+/* Lazy loading support */
+.lazy-load {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.lazy-load.loaded {
+  opacity: 1;
 }

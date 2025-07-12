@@ -1,76 +1,130 @@
-﻿# Job Application App📑💼
+﻿# Job Application App 📑💼
 
 ## Project Overview
-This project is currently in development.The goal is to create an application with an API that connects to a database to track job applications.
+A full-stack, security-focused application to track job applications, featuring a robust REST API (Node.js/Express/MongoDB) and a modern React frontend.
 
-(API developed. Next step - Frontend)
-
-
-
+---
 
 ## Features
-- **Express Server** 🖥️: The backend is built using Express.js, a fast and minimalist web framework for Node.js. 
-- **REST API** 🌐: The application provides a RESTful API to handle HTTP requests. 
-- **MongoDB Integration** 🗄️: The app uses MongoDB as the database to store job application data. 
-- **Environment Variables** 🔒: Configuration is managed using environment variables for flexibility and security. 
-- **User and Task Routes** 🧑‍💼: The API includes routes for managing users and tasks related to job applications.
+### Backend
+- **Express Server**: Secure API with authentication, rate limiting, 2FA, and attempt tracking.
+- **REST API**: Endpoints for users and job applications.
+- **MongoDB**: NoSQL database for persistence.
+- **Security**: Input sanitization, detection of malicious input (XSS, SQLi, etc), Telegram alerts, and strong access control.
+- **Middlewares**: Authentication, login attempt tracking, 2FA, and malicious input detection.
 
+### Frontend
+- **React**: Modern SPA with protected navigation.
+- **Material UI**: Responsive, stylish UI.
+- **Authentication Management**: Registration, login, verification, input blocking, and access control.
 
-## Technologies Used 
-- **JavaScript** ⚙️: The primary programming language for the backend. 
-- **Node.js** 🖧: The runtime environment for executing JavaScript on the server. - **Express.js** 🖥️: The web framework used to build the API. 
-- **MongoDB** 🗃️: The NoSQL database used to store application data. 
-- **dotenv** 🌱: A module to load environment variables from a `.env` file. 
-- **body-parser** 🍽️: Middleware to parse incoming request bodies in a middleware before your handlers.
+---
+
+## Screenshots
+
+### Home Page
+![Home](imgs/Screenshot from 2025-07-12 13-43-24.png)
+
+### Successful Registration
+![Registration Success](imgs/Screenshot from 2025-07-12 13-44-46.png)
+
+### Login Page
+![Login](imgs/Screenshot from 2025-07-12 13-45-26.png)
+
+### Job Applications Dashboard
+![Job Applications](imgs/Screenshot from 2025-07-12 13-56-55.png)
+
+### Access Denied
+![Access Denied](imgs/Screenshot from 2025-07-12 13-47-15.png)
+
+### Input Blocked (Malicious Input)
+![Input Blocked](imgs/Screenshot from 2025-07-12 13-48-39.png)
+
+---
+
+## Security Highlights
+- **Input Sanitization**: All user input is sanitized on the backend to prevent XSS, SQL injection, and other attacks.
+- **Malicious Input Detection**: Attempts to submit dangerous code or patterns are blocked and tracked. After 3 attempts, the user is temporarily blocked.
+- **2FA**: Two-factor authentication is required for sensitive actions.
+- **Rate Limiting**: Prevents brute-force and abuse.
+- **Telegram Alerts**: Security events (e.g., repeated malicious input) trigger instant Telegram notifications to the admin.
+- **Access Control**: Users can only access their own data; unauthorized access attempts are denied.
+
+---
+
+## Project Structure
+```
+backend/
+  models/           # Mongoose models (User, Job)
+  routes/           # Express routes (userRoutes, jobRoutes)
+  middlewares/      # Security middlewares
+  utils/            # Utilities (argon, telegram)
+  db.js             # MongoDB connection
+  index.js          # Entry point
+frontend/
+  src/
+    components/     # React components (Login, Register, Profile, etc)
+    App.js          # Root component
+    index.js        # Entry point
+  public/           # index.html, manifest
+imgs/               # Screenshots for documentation
+```
+
+---
 
 ## Getting Started
 ### Prerequisites
-- Node.js installed on your machine.💻
-- MongoDB instance (local or cloud-based).🌍
+- Node.js >= 18
+- MongoDB (local or Atlas)
 
 ### Installation
 1. Clone the repository:
     ```sh
     git clone https://github.com/hugo8072/Job_Application_App
-    ```
-2. Navigate to the project directory:
-    ```sh
     cd Job_Application_App
     ```
-3. Install the dependencies:
+2. Install backend and frontend dependencies:
     ```sh
-    npm install
+    cd backend && npm install
+    cd ../frontend && npm install
+    ```
+3. Create the `.env` file in `backend/`:
+    ```dotenv
+    PORT=8000
+    MONGO_URL=mongodb+srv://<username>:<password>@cluster0.mongodb.net/
+    JWT_SECRET_KEY=your_secret_key
+    DB_NAME=job_app_db
     ```
 
-### Configuration
-Create a `.env` file in the root directory and add the following environment variables:
-```dotenv
-PORT=8000
-MONGO_URL=mongodb+srv://<username>:<password>@cluster0.mongodb.net/
-JWT_SECRET_KEY=your_secret_key
-DB_NAME=job_app_db
-```
+### Running
+- **Backend:**
+    ```sh
+    cd backend
+    npm start
+    ```
+- **Frontend:**
+    ```sh
+    cd frontend
+    npm start
+    ```
 
+---
 
-Running the Application
-Start the server:
-npm start
+## API Endpoints (Main)
+- `GET /api/users` — List users
+- `POST /api/users/register` — Register
+- `POST /api/users/login` — Login
+- `POST /api/users/verify` — 2FA
+- `GET /api/jobs` — List job applications
+- `POST /api/jobs` — Create job application
 
-The server will run on the port specified in the .env file (default is 8000).  
+---
 
-API Endpoints
+## Contribution
+Contributions are welcome! Fork and submit a pull request.
 
-GET /: Test route to check if the API is working.
-
-/users: Routes for managing users.
-
-/tasks: Routes for managing tasks related to job applications.
-
-
-Contributions are welcome! Please fork the repository and create a pull request with your changes. 🔄
-
-License
-This project is licensed under the MIT License.
+## License
+MIT
 
 
 

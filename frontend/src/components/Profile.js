@@ -1,22 +1,73 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import axios from 'axios';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import './Profile.css';
 import ProfileView from './ProfileView';
 
+/**
+ * Profile Container Component - Manages job application data and user profile logic
+ * Handles API calls, state management, and business logic for job applications
+ * Passes data and handlers to ProfileView component for presentation
+ * @returns {JSX.Element} ProfileView component with all required props
+ */
 function Profile() {
-  const { userId } = useParams();
+  const { userId } = useParams(); // <-- Este é o userId da URL: /users/:userId/profile
   const navigate = useNavigate();
+  const location = useLocation();
+
+  /**
+   * Check if user is authorized to access this profile
+   */
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const currentUserId = localStorage.getItem('userId');
+    
+    // No token - redirect to login
+    if (!token) {
+      navigate('/users/login');
+      return;
+    }
+    
+    // Trying to access someone else's profile - access denied
+    if (userId !== currentUserId) {
+      navigate('/access-denied');
+      return;
+    }
+  }, [userId, navigate]);
+
+  /**
+   * User's name from localStorage or navigation state
+   * @type {string}
+   */
+  const userName = useMemo(() => 
+    location.state?.name || localStorage.getItem('name') || 'User', 
+    [location.state?.name]
+  );
+
+  /**
+   * All job applications for the user
+   * @type {Array<Object>}
+   */
   const [jobs, setJobs] = useState([]);
+
+  /**
+   * Form data for adding new job applications
+   * @type {Object}
+   */
   const [newJob, setNewJob] = useState({
     Position: '',
     Company: '',
     Phase: '',
     CL: false,
     Status: true,
-    Notes: '',
+    Note: '',
     'Applied date': '',
   });
+
+  /**
+   * Current filter values for job applications
+   * @type {Object}
+   */
   const [filters, setFilters] = useState({
     Position: '',
     Company: '',
@@ -26,205 +77,273 @@ function Profile() {
     Note: '',
     'Applied date': ''
   });
+
+  /**
+   * Error state for API operations
+   * @type {string}
+   */
   const [error, setError] = useState('');
 
-  const uniqueOptions = (field) => [...new Set(jobs.map(j => j[field]).filter(v => v !== undefined && v !== null && v !== ''))];
+  /**
+   * Loading state for async operations
+   * @type {boolean}
+   */
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    console.log(
-      "sjaddasssssssssssssssssssssssssssssssssssssssssss\n" +
-      "sdammmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm\n" +
-      "dsaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-  );
-    if (token) {
-      console.log('TOKEN35:', token); // Deve mostrar o token
-    } else {
-      console.log('TOKEN35: sem token');
+  /**
+   * Authentication token from localStorage
+   * @type {string|null}
+   */
+  const token = useMemo(() => localStorage.getItem('token'), []);
+
+  /**
+   * Axios instance with default configuration
+   */
+  const apiClient = useMemo(() => axios.create({
+    baseURL: process.env.REACT_APP_API_URL,
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    withCredentials: true,
+  }), [token]);
+
+  /**
+   * Generates unique options for filter dropdowns
+   * @param {string} field - The field to extract unique values from
+   * @returns {Array} Array of unique values
+   */
+  const uniqueOptions = useCallback((field) => {
+    return [...new Set(jobs.map(job => job[field]).filter(value => 
+      value !== undefined && value !== null && value !== ''
+    ))];
+  }, [jobs]);
+
+  /**
+   * Fetches job applications from the API
+   */
+  const fetchJobs = useCallback(async () => {
+    if (!token) {
+      navigate('/users/login');
+      return;
     }
 
+    try {
+      setLoading(true);
+      setError('');
 
-    const fetchJobs = async () => {
-      try {
-        const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}/jobs/${userId}`,
-          {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
-            withCredentials: true,
-          }
-        );
-        setJobs(response.data);
-      } catch (error) {
-        if (
-          error.response &&
-          error.response.data &&
-          error.response.data.error &&
-          error.response.status === 404
-        ) {
-          setJobs([]);
-        } else if (error.response && error.response.data && error.response.data.error) {
-          console.error('Error fetching jobs:', error.response.data.error);
-          setError(error.response.data.error);
-        } else {
-          console.error('Error fetching jobs:', error.message);
-          setError('Error fetching jobs: ' + error.message);
-        }
+      const response = await apiClient.get(`/jobs/${userId}`);
+      setJobs(response.data);
+    } catch (err) {
+      if (err.response?.status === 404) {
+        setJobs([]);
+      } else if (err.response?.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('name');
+        navigate('/users/login');
+      } else {
+        setError(err.response?.data?.error || 'Failed to fetch jobs');
       }
-    };
+    } finally {
+      setLoading(false);
+    }
+  }, [userId, navigate, token, apiClient]);
 
-
-    fetchJobs();
-  }, [userId, navigate]);
-
-  const handleChange = (e) => {
+  /**
+   * Handles changes to new job form fields
+   * @param {Event} e - Input change event
+   */
+  const handleChange = useCallback((e) => {
     const { name, value, type, checked } = e.target;
-    setNewJob({
-      ...newJob,
+    setNewJob(prev => ({
+      ...prev,
       [name]: type === 'checkbox' ? checked : value
-    });
-  };
+    }));
+  }, []);
 
-  const handleJobFieldChange = (jobId, field, value, type) => {
-    setJobs((prevJobs) =>
-      prevJobs.map((job) =>
+  /**
+   * Handles updating a job field value
+   * @param {string} jobId - The ID of the job to update
+   * @param {string} field - The field name to update
+   * @param {*} value - The new value for the field
+   * @param {string} type - The input type (for checkbox handling)
+   */
+  const handleJobFieldChange = useCallback((jobId, field, value, type) => {
+    setJobs(prevJobs =>
+      prevJobs.map(job =>
         job._id === jobId
           ? { ...job, [field]: type === 'checkbox' ? value : value }
           : job
       )
     );
-  };
+  }, []);
 
-  const handleUpdateJob = async (job) => {
-    const token = localStorage.getItem('token');
-    const allowedUpdates = [
-      'Phase', 'Status', 'Note', 'Position', 'Applied date', 'Company', 'CL'
-    ];
-    const jobToSend = {};
+  /**
+   * Sanitizes job data for API submission
+   * @param {Object} job - Job object to sanitize
+   * @returns {Object} Sanitized job object
+   */
+  const sanitizeJobData = useCallback((job) => {
+    const allowedUpdates = ['Phase', 'Status', 'Note', 'Position', 'Applied date', 'Company', 'CL'];
+    const sanitizedJob = {};
 
     allowedUpdates.forEach(field => {
       if (field in job) {
         if (field === 'Status' || field === 'CL') {
-          jobToSend[field] = !!job[field];
+          sanitizedJob[field] = Boolean(job[field]);
         } else if (field === 'Applied date' && job[field]) {
-          const d = new Date(job[field]);
-          jobToSend[field] = !isNaN(d) ? d.toISOString().slice(0, 10) : '';
+          const date = new Date(job[field]);
+          sanitizedJob[field] = !isNaN(date) ? date.toISOString().slice(0, 10) : '';
         } else {
-          jobToSend[field] = job[field];
+          sanitizedJob[field] = job[field];
         }
       }
     });
 
+    return sanitizedJob;
+  }, []);
+
+  /**
+   * Updates a job application in the database
+   * @param {Object} job - The job object to update
+   */
+  const handleUpdateJob = useCallback(async (job) => {
     try {
-      await axios.patch(
-        `${process.env.REACT_APP_API_URL}/jobs/${job._id}`,
-        jobToSend,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          withCredentials: true,
-        }
-      );
+      const jobToSend = sanitizeJobData(job);
+      
+      await apiClient.patch(`/jobs/${job._id}`, jobToSend);
+      
       setJobs(prevJobs =>
         prevJobs.map(j =>
           j._id === job._id ? { ...j, ...jobToSend } : j
         )
       );
-    } catch (error) {
-      if (error.response) {
-        console.error('Error updating job:', error.response.data);
+    } catch (err) {
+      if (
+        err.response?.status === 400 && err.response?.data?.message === 'Insecure input detected!'
+      ) {
+        navigate('/malicious-input');
       } else {
-        console.error('Error updating job:', error);
+        setError('Failed to update job');
       }
     }
-  };
+  }, [apiClient, sanitizeJobData, navigate]);
 
-  const handleAddJob = async () => {
-    const token = localStorage.getItem('token');
+  /**
+   * Adds a new job application to the database
+   */
+  const handleAddJob = useCallback(async () => {
     try {
-      const jobToSend = {
-        ...newJob,
-        'Applied date': newJob['Applied date']
-          ? new Date(newJob['Applied date']).toISOString().slice(0, 10)
-          : '',
-      };
-      const response = await axios.post(
-        `${process.env.REACT_APP_API_URL}/jobs/createjob`,
-        jobToSend,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          withCredentials: true,
-        }
-      );
-      setJobs([...jobs, response.data.job]);
+      const jobToSend = sanitizeJobData(newJob);
+      
+      const response = await apiClient.post('/jobs/createjob', jobToSend);
+      
+      setJobs(prevJobs => [...prevJobs, response.data.job]);
       setNewJob({
         Position: '',
         Company: '',
         Phase: '',
         CL: false,
         Status: true,
-        Notes: '',
+        Note: '',
         'Applied date': ''
       });
-    } catch (error) {
-      console.error('Error adding job:', error);
-    }
-  };
-
-const handleDeleteJob = async (jobId) => {
-  const token = localStorage.getItem('token');
-  try {
-    await axios.delete(
-      `${process.env.REACT_APP_API_URL}/jobs/${jobId}`,
-      {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        withCredentials: true,
+    } catch (err) {
+      if (
+        err.response?.status === 400 && err.response?.data?.message === 'Insecure input detected!'
+      ) {
+        navigate('/malicious-input');
+      } else {
+        setError('Failed to add job');
       }
-    );
-    setJobs(jobs.filter(job => job._id !== jobId));
-  } catch (error) {
-    console.error('Error deleting job:', error);
-  }
-};
+    }
+  }, [apiClient, sanitizeJobData, newJob, navigate]);
 
-  const getDateValue = (date) => {
+  /**
+   * Deletes a job application from the database
+   * @param {string} jobId - The ID of the job to delete
+   */
+  const handleDeleteJob = useCallback(async (jobId) => {
+    try {
+      await apiClient.delete(`/jobs/${jobId}`);
+      setJobs(prevJobs => prevJobs.filter(job => job._id !== jobId));
+    } catch (err) {
+      setError('Failed to delete job');
+    }
+  }, [apiClient]);
+
+  /**
+   * Formats date values for display in date inputs
+   * @param {string|Date} date - The date to format
+   * @returns {string} Formatted date string (YYYY-MM-DD)
+   */
+  const getDateValue = useCallback((date) => {
     if (!date) return '';
+    
     if (typeof date === 'string') {
       if (/^\d{4}-\d{2}-\d{2}$/.test(date)) return date;
       if (!isNaN(Date.parse(date))) return new Date(date).toISOString().slice(0, 10);
     }
+    
     if (date instanceof Date && !isNaN(date)) {
       return date.toISOString().slice(0, 10);
     }
+    
     return '';
-  };
+  }, []);
 
-  const filteredJobs = jobs.filter(job => {
-    return (
-      (filters.Position === '' || job.Position?.toLowerCase().includes(filters.Position.toLowerCase())) &&
-      (filters.Company === '' || job.Company?.toLowerCase().includes(filters.Company.toLowerCase())) &&
-      (filters.Phase === '' || job.Phase?.toLowerCase().includes(filters.Phase.toLowerCase())) &&
-      (filters.CL === '' || String(job.CL).toLowerCase().includes(filters.CL.toLowerCase())) &&
-      (filters.Status === '' || (job.Status ? 'active' : 'inactive').includes(filters.Status.toLowerCase())) &&
-      (filters.Note === '' || job.Note?.toLowerCase().includes(filters.Note.toLowerCase())) &&
-      (filters['Applied date'] === '' || getDateValue(job['Applied date']).includes(filters['Applied date']))
-    );
-  });
+  /**
+   * Filters jobs based on current filter values
+   * @returns {Array<Object>} Filtered array of job objects
+   */
+  const filteredJobs = useMemo(() => {
+    return jobs.filter(job => {
+      const matchesPosition = !filters.Position || 
+        job.Position?.toLowerCase().includes(filters.Position.toLowerCase());
+      
+      const matchesCompany = !filters.Company || 
+        job.Company?.toLowerCase().includes(filters.Company.toLowerCase());
+      
+      const matchesPhase = !filters.Phase || 
+        job.Phase?.toLowerCase().includes(filters.Phase.toLowerCase());
+      
+      const matchesCL = !filters.CL || 
+        String(job.CL).toLowerCase().includes(filters.CL.toLowerCase());
+      
+      const matchesStatus = !filters.Status || 
+        (job.Status ? 'active' : 'inactive').includes(filters.Status.toLowerCase());
+      
+      const matchesNote = !filters.Note || 
+        job.Note?.toLowerCase().includes(filters.Note.toLowerCase());
+      
+      const matchesDate = !filters['Applied date'] || 
+        getDateValue(job['Applied date']).includes(filters['Applied date']);
 
-  if (error) {
-    return <div className="error">{error}</div>;
+      return matchesPosition && matchesCompany && matchesPhase && 
+             matchesCL && matchesStatus && matchesNote && matchesDate;
+    });
+  }, [jobs, filters, getDateValue]);
+
+  /**
+   * Effect hook to fetch jobs on component mount
+   */
+  useEffect(() => {
+    if (userId) {
+      fetchJobs();
+    }
+  }, [userId, fetchJobs]);
+
+  // Show loading state
+  if (loading) {
+    return <div className="profile-loading">Loading profile...</div>;
   }
 
+  // Show error state
+  if (error) {
+    return <div className="profile-error">{error}</div>;
+  }
+
+  // Render ProfileView with all required props
   return (
     <ProfileView
       filters={filters}
@@ -240,8 +359,7 @@ const handleDeleteJob = async (jobId) => {
       handleDeleteJob={handleDeleteJob}
       handleAddJob={handleAddJob}
       getDateValue={getDateValue}
-
-    
+      userName={userName}
     />
   );
 }

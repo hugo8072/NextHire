@@ -3,6 +3,23 @@ import { Box, Paper, Typography, Stack, TextField, Button, IconButton, InputAdor
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
+/**
+ * RegisterView Component - Presentational component for user registration interface
+ * Displays registration form with validation feedback in a futuristic design
+ * This is a pure presentational component that receives all data and handlers as props
+ * @param {Object} props - The component props
+ * @param {Object} props.formData - Registration form data
+ * @param {Function} props.handleChange - Handler for form field changes
+ * @param {Function} props.handleSubmit - Handler for form submission
+ * @param {boolean} props.showPassword - Password visibility state
+ * @param {Function} props.setShowPassword - Handler for password visibility toggle
+ * @param {boolean} props.passwordMatch - Password confirmation match state
+ * @param {Object} props.validationErrors - Validation errors for form fields
+ * @param {string} props.error - Error message for display
+ * @param {string} props.success - Success message for display
+ * @param {Function} props.navigate - Navigation function for routing
+ * @returns {JSX.Element} Rendered registration view component
+ */
 function RegisterView({
   formData,
   handleChange,
@@ -12,9 +29,34 @@ function RegisterView({
   passwordMatch,
   validationErrors,
   error,
-  success,
+  showModal,
+  setShowModal,
+  modalMessage,
   navigate
 }) {
+  /**
+   * Toggles password visibility state
+   */
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
+  /**
+   * Navigates to login page
+   */
+  const navigateToLogin = () => {
+    setShowModal(false);
+    navigate('/users/login');
+  };
+
+  /**
+   * Navigates to home page
+   */
+  const navigateToHome = () => {
+    setShowModal(false);
+    navigate('/');
+  };
+
   return (
     <Box
       sx={{
@@ -63,8 +105,11 @@ function RegisterView({
           >
             Register
           </Typography>
+
+          {/* Registration form */}
           <form onSubmit={handleSubmit} style={{ width: '100%' }}>
             <Stack spacing={2}>
+              {/* Email field */}
               <TextField
                 label="Email"
                 name="email"
@@ -75,6 +120,8 @@ function RegisterView({
                 sx={inputSx}
                 InputLabelProps={{ style: { color: '#1de9b6' } }}
               />
+
+              {/* Name field with validation */}
               <TextField
                 label="Name"
                 name="name"
@@ -89,6 +136,8 @@ function RegisterView({
                   <span key={i} style={{ color: '#ff3333' }}>{err}</span>
                 ))}
               />
+
+              {/* Password field with visibility toggle */}
               <TextField
                 label="Password"
                 name="password"
@@ -100,12 +149,12 @@ function RegisterView({
                 sx={inputSx}
                 InputLabelProps={{ style: { color: '#1de9b6' } }}
                 error={!!(validationErrors.password && validationErrors.password.length)}
-                helperText=" " // espaço para manter altura
+                helperText=" " // Space to maintain height
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
                       <IconButton
-                        onClick={() => setShowPassword(!showPassword)}
+                        onClick={togglePasswordVisibility}
                         edge="end"
                         sx={{ color: '#00ff99' }}
                       >
@@ -115,6 +164,8 @@ function RegisterView({
                   ),
                 }}
               />
+
+              {/* Password validation errors display */}
               {validationErrors.password && validationErrors.password.length > 0 && (
                 <Stack spacing={0.5} sx={{ mt: 0.5, mb: 1, width: '100%' }}>
                   {validationErrors.password.map((err, i) => (
@@ -132,6 +183,8 @@ function RegisterView({
                   ))}
                 </Stack>
               )}
+
+              {/* Confirm password field */}
               <TextField
                 label="Confirm Password"
                 name="confirmPassword"
@@ -145,6 +198,8 @@ function RegisterView({
                 error={!passwordMatch}
                 helperText={!passwordMatch && <span style={{ color: '#ff3333' }}>Passwords do not match</span>}
               />
+
+              {/* Phone number field */}
               <TextField
                 label="Phone Number"
                 name="phoneNumber"
@@ -155,11 +210,15 @@ function RegisterView({
                 sx={inputSx}
                 InputLabelProps={{ style: { color: '#1de9b6' } }}
               />
+
+              {/* Error message display */}
               {error && (
                 <Typography sx={{ color: '#ff3333', fontWeight: 700, textAlign: 'center' }}>
                   {error}
                 </Typography>
               )}
+
+              {/* Form action buttons */}
               <Stack direction="row" spacing={2} justifyContent="center">
                 <Button
                   type="submit"
@@ -171,46 +230,61 @@ function RegisterView({
                 <Button
                   variant="outlined"
                   sx={buttonSx}
-                  onClick={() => window.location.href = '/'}
+                  onClick={navigateToHome}
                 >
                   Home
                 </Button>
               </Stack>
             </Stack>
           </form>
-          {success && (
-            <Paper
-              sx={{
-                bgcolor: '#181c1f',
-                border: '1.5px solid #00ff99',
-                borderRadius: 4,
-                p: 3,
-                mt: 2,
+
+          {/* Modal de sucesso */}
+          {showModal && (
+            <div style={{
+              position: 'fixed',
+              top: 0, left: 0, right: 0, bottom: 0,
+              background: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 9999
+            }}>
+              <div style={{
+                background: '#232526',
                 color: '#00ff99',
+                padding: '2rem',
+                borderRadius: '16px',
+                maxWidth: '420px',
                 textAlign: 'center',
-                boxShadow: '0 4px 16px 0 #00ff9955',
-              }}
-            >
-              <Typography sx={{ color: '#00ff99', fontWeight: 700, mb: 2 }}>
-                {success}
-              </Typography>
-              <Stack direction="row" spacing={2} justifyContent="center">
+                boxShadow: '0 8px 32px 0 #00ff9977',
+                border: '1.5px solid #00ff99',
+                fontFamily: 'Orbitron, monospace'
+              }}>
+                <h2 style={{ color: '#00ff99', marginBottom: '1rem' }}>Registration Successful!</h2>
+                <pre style={{
+                  whiteSpace: 'pre-line',
+                  color: '#00ff99',
+                  background: 'transparent',
+                  fontFamily: 'inherit',
+                  fontSize: '1.05rem',
+                  marginBottom: '1.5rem'
+                }}>{modalMessage}</pre>
                 <Button
                   variant="outlined"
-                  sx={buttonSx}
-                  onClick={() => navigate('/users/login')}
+                  sx={{ ...buttonSx, marginRight: '1rem' }}
+                  onClick={navigateToLogin}
                 >
-                  Login
+                  Go to Login
                 </Button>
                 <Button
                   variant="outlined"
                   sx={buttonSx}
-                  onClick={() => window.location.href = '/'}
+                  onClick={navigateToHome}
                 >
-                  Home
+                  Go to Home
                 </Button>
-              </Stack>
-            </Paper>
+              </div>
+            </div>
           )}
         </Stack>
       </Paper>
@@ -218,6 +292,7 @@ function RegisterView({
   );
 }
 
+// Styles for input fields
 const inputSx = {
   bgcolor: '#232526',
   color: '#1de9b6',
@@ -239,6 +314,7 @@ const inputSx = {
   },
 };
 
+// Styles for buttons
 const buttonSx = {
   color: '#00ff99',
   borderColor: '#00ff99',

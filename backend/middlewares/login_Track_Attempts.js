@@ -1,7 +1,16 @@
-import fs from 'fs';
-import path from 'path';
-import os from 'os';
-import { fileURLToPath } from 'url';
+/**
+ * Middleware to track and limit login attempts by IP and email.
+ *
+ * - Tracks failed login attempts in memory for each IP and email.
+ * - Resets counters after a defined time window (default: 15 minutes).
+ * - If the maximum number of failed attempts is exceeded for either IP or email,
+ *   logs the event to MongoDB using the LoginAttempt model and blocks further attempts with a 429 response.
+ * - Does not log or store passwords.
+ * - Continues to the next middleware if limits are not exceeded.
+ *
+ * Usage: Place this middleware before your login route handler to protect against brute-force attacks.
+ */
+
 import User from '../models/User.js';
 import { verifyPassword } from '../utils/argon.js';
 import useragent from 'useragent';
@@ -9,91 +18,81 @@ import geoip from 'geoip-lite';
 import requestIp from 'request-ip';
 import device from 'express-device';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
+// Maximum allowed failed attempts per IP and per email
 const MAX_ATTEMPTS_IP = 10;
 const MAX_ATTEMPTS_EMAIL = 5;
-const ATTEMPT_RESET_TIME = 15 * 60 * 1000; // 15 minutes
+// Time window to reset the attempt counters (15 minutes)
+const ATTEMPT_RESET_TIME = 15 * 60 * 1000;
 
+// In-memory trackers for attempts by IP and by email
 const attemptTrackerIP = {};
 const attemptTrackerEmail = {};
 
+/**
+ * Express middleware to track and limit login attempts.
+ * Blocks requests and logs to MongoDB if limits are exceeded.
+ */
 const login_Track_Attempts = async (req, res, next) => {
     const ip = requestIp.getClientIp(req);
     const currentTime = Date.now();
     const { email, password } = req.body;
 
+    // Initialize tracker for this IP if it doesn't exist
     if (!attemptTrackerIP[ip]) {
-        attemptTrackerIP[ip] = { attempts: 0, lastAttempt: currentTime, emails: [], passwords: [] };
+        attemptTrackerIP[ip] = { attempts: 0, lastAttempt: currentTime, emails: [] };
     }
 
+    // Initialize tracker for this email if it doesn't exist
     if (!attemptTrackerEmail[email]) {
-        attemptTrackerEmail[email] = { attempts: 0, lastAttempt: currentTime, ips: [], passwords: [] };
+        attemptTrackerEmail[email] = { attempts: 0, lastAttempt: currentTime, ips: [] };
     }
 
-    const { attempts: attemptsIP, lastAttempt: lastAttemptIP, emails: emailsIP, passwords: passwordsIP } = attemptTrackerIP[ip];
-    const { attempts: attemptsEmail, lastAttempt: lastAttemptEmail, ips: ipsEmail, passwords: passwordsEmail } = attemptTrackerEmail[email];
-
-    if (currentTime - lastAttemptIP > ATTEMPT_RESET_TIME) {
-        attemptTrackerIP[ip] = { attempts: 0, lastAttempt: currentTime, emails: [], passwords: [] };
+    // Reset IP tracker if time window has passed
+    if (currentTime - attemptTrackerIP[ip].lastAttempt > ATTEMPT_RESET_TIME) {
+        attemptTrackerIP[ip] = { attempts: 0, lastAttempt: currentTime, emails: [] };
     }
 
-    if (currentTime - lastAttemptEmail > ATTEMPT_RESET_TIME) {
-        attemptTrackerEmail[email] = { attempts: 0, lastAttempt: currentTime, ips: [], passwords: [] };
+    // Reset email tracker if time window has passed
+    if (currentTime - attemptTrackerEmail[email].lastAttempt > ATTEMPT_RESET_TIME) {
+        attemptTrackerEmail[email] = { attempts: 0, lastAttempt: currentTime, ips: [] };
     }
 
+    // Check if the password is correct for the given email
     const user = await User.findOne({ email });
     const isPasswordCorrect = user && await verifyPassword(user.password, password);
 
+    // If password is incorrect, increment attempt counters and log details
     if (!isPasswordCorrect) {
         attemptTrackerIP[ip].attempts += 1;
         attemptTrackerIP[ip].lastAttempt = currentTime;
         attemptTrackerIP[ip].emails.push(email);
-        attemptTrackerIP[ip].passwords.push(password);
 
         attemptTrackerEmail[email].attempts += 1;
         attemptTrackerEmail[email].lastAttempt = currentTime;
         attemptTrackerEmail[email].ips.push(ip);
-        attemptTrackerEmail[email].passwords.push(password);
     }
 
+    // If the maximum number of attempts is exceeded for IP or email, log to MongoDB and block further attempts
     if (attemptTrackerIP[ip].attempts > MAX_ATTEMPTS_IP || attemptTrackerEmail[email].attempts > MAX_ATTEMPTS_EMAIL) {
-        const securityDir = path.join(__dirname, 'security');
-
-        if (!fs.existsSync(securityDir)) {
-            fs.mkdirSync(securityDir);
-        }
-
-        const filePath = path.join(securityDir, `login_attempts_${ip}_${email}.log`);
         const agent = useragent.parse(req.headers['user-agent']);
         const geo = geoip.lookup(ip);
-        const systemInfo = `
-            Time: ${new Date().toISOString()}
-            IP Address: ${ip}
-            Email: ${email}
-            User Agent: ${agent.toString()}
-            Hostname: ${os.hostname()}
-            Platform: ${os.platform()}
-            Architecture: ${os.arch()}
-            CPU: ${JSON.stringify(os.cpus(), null, 2)}
-            Memory: ${os.totalmem()} bytes
-            Free Memory: ${os.freemem()} bytes
-            Geo Location: ${geo ? JSON.stringify(geo) : 'N/A'}
-            Device Type: ${req.device.type}
-            Attempts by IP: ${attemptTrackerIP[ip].attempts}
-            Attempts by Email: ${attemptTrackerEmail[email].attempts}
-            Emails: ${attemptTrackerIP[ip].emails.join(', ')}
-            Passwords: ${attemptTrackerIP[ip].passwords.join(', ')}
-            IPs: ${attemptTrackerEmail[email].ips.join(', ')}
-            Passwords: ${attemptTrackerEmail[email].passwords.join(', ')}
-        `;
 
-        fs.appendFileSync(filePath, systemInfo);
+        // Save the attempt log to MongoDB
+        await LoginAttempt.create({
+            ip,
+            email,
+            userAgent: agent.toString(),
+            geo,
+            deviceType: req.device?.type,
+            attemptsByIP: attemptTrackerIP[ip].attempts,
+            attemptsByEmail: attemptTrackerEmail[email].attempts
+        });
+
         return res.status(429).json({ message: 'Too many attempts. Please try again later.' });
     }
 
+    // Continue to the next middleware or route handler
     next();
 };
 
-export default login_Track_Attempts;
+export { login_Track_Attempts };

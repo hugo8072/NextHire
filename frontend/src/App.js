@@ -5,6 +5,10 @@ import Register from './components/Register';
 import Login from './components/Login';
 import Verification from './components/Verification';
 import Profile from './components/Profile'; // Import the Profile component
+import AccessDenied from './components/AccessDenied'; 
+import NotFound from './components/NotFound';
+import MaliciousInput from './components/MaliciousInput'; // Import the MaliciousInput component
+
 
 function App() {
   return (
@@ -15,6 +19,11 @@ function App() {
         <Route path="/users/login" element={<Login />} />
         <Route path="/users/verification" element={<Verification />} />
         <Route path="/users/:userId/profile" element={<Profile />} /> {/* Add the Profile route */}
+        <Route path="/access-denied" element={<AccessDenied />} />
+        <Route path="/malicious-input" element={<MaliciousInput />} /> {/* Add the MaliciousInput route */}
+        <Route path="*" element={<NotFound />} /> {/* <-- CATCH-ALL ROUTE */}
+        
+
         {/* Add other routes here */}
       </Routes>
     </Router>

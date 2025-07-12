@@ -8,6 +8,27 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 
+/**
+ * ProfileView Component - Presentational component for user profile interface
+ * Displays job applications in a futuristic table with filtering capabilities
+ * This is a pure presentational component that receives all data and handlers as props
+ * @param {Object} props - The component props
+ * @param {Object} props.filters - Current filter values
+ * @param {Function} props.setFilters - Handler for filter changes
+ * @param {Function} props.uniqueOptions - Function to get unique options for filters
+ * @param {Array} props.filteredJobs - Filtered job applications
+ * @param {Array} props.jobs - All job applications
+ * @param {Object} props.newJob - New job form data
+ * @param {Function} props.setNewJob - Handler for new job form changes
+ * @param {Function} props.handleChange - Handler for new job form field changes
+ * @param {Function} props.handleJobFieldChange - Handler for job field changes
+ * @param {Function} props.handleUpdateJob - Handler for updating jobs
+ * @param {Function} props.handleDeleteJob - Handler for deleting jobs
+ * @param {Function} props.handleAddJob - Handler for adding jobs
+ * @param {Function} props.getDateValue - Handler for date formatting
+ * @param {string} props.userName - Current user's name
+ * @returns {JSX.Element} Rendered profile view component
+ */
 function ProfileView({
   filters,
   setFilters,
@@ -16,26 +37,40 @@ function ProfileView({
   jobs,
   newJob,
   setNewJob,
+  handleChange, // <-- Receives handleChange from Profile.js
   handleJobFieldChange,
   handleUpdateJob,
   handleDeleteJob,
   handleAddJob,
   getDateValue,
+  userName,
 }) {
+  /**
+   * State for delete confirmation dialog
+   * @type {Object}
+   */
   const [deleteDialog, setDeleteDialog] = useState({ open: false, job: null });
+
+  /**
+   * State for add job form validation errors
+   * @type {Object}
+   */
   const [addError, setAddError] = useState({});
   
-  // Novo handleChange robusto para o novo job
+  /**
+   * Enhanced handleChange wrapper for new job form with error clearing
+   * @param {Event} e - Input change event
+   */
   const handleNewJobChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setNewJob(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value,
-    }));
-    // Limpa erro ao editar o campo
+    handleChange(e); // Use the handleChange from Profile.js
+    // Clear error when user starts typing
+    const { name } = e.target;
     setAddError(prev => ({ ...prev, [name]: '' }));
   };
 
+  /**
+   * Validates and adds a new job with form validation
+   */
   const handleAddJobWithValidation = () => {
     const errors = {};
     if (!newJob.Position) errors.Position = 'Position is required';
@@ -49,19 +84,32 @@ function ProfileView({
     }
   };
 
+  /**
+   * Handles user logout by clearing localStorage and redirecting
+   */
   const handleLogout = () => {
     localStorage.removeItem('token');
     window.location.href = '/users/login';
   };
 
+  /**
+   * Opens the delete confirmation dialog
+   * @param {Object} job - Job object to delete
+   */
   const openDeleteDialog = (job) => {
     setDeleteDialog({ open: true, job });
   };
 
+  /**
+   * Closes the delete confirmation dialog
+   */
   const closeDeleteDialog = () => {
     setDeleteDialog({ open: false, job: null });
   };
 
+  /**
+   * Confirms and executes job deletion
+   */
   const confirmDelete = () => {
     if (deleteDialog.job) {
       handleDeleteJob(deleteDialog.job._id);
@@ -114,52 +162,32 @@ function ProfileView({
               fontFamily: 'Orbitron, monospace',
             }}
           >
-            {'Job Applications'}
+            {userName ? `${userName}'s Job Applications` : 'Job Applications'}
           </Typography>
-          {/* Filtros */}
+          
+          {/* Filter section */}
           <Stack direction="row" spacing={1} flexWrap="wrap" justifyContent="center" sx={{ mb: 2 }}>
             <TextField
               label="Position"
               value={filters.Position}
               onChange={e => setFilters({ ...filters, Position: e.target.value })}
-              select
-              SelectProps={{ native: false }}
               sx={filterFieldSx}
               size="small"
-            >
-              <MenuItem value="">All</MenuItem>
-              {uniqueOptions('Position').map(opt => (
-                <MenuItem key={opt} value={opt}>{opt}</MenuItem>
-              ))}
-            </TextField>
+            />
             <TextField
               label="Company"
               value={filters.Company}
               onChange={e => setFilters({ ...filters, Company: e.target.value })}
-              select
-              SelectProps={{ native: false }}
               sx={filterFieldSx}
               size="small"
-            >
-              <MenuItem value="">All</MenuItem>
-              {uniqueOptions('Company').map(opt => (
-                <MenuItem key={opt} value={opt}>{opt}</MenuItem>
-              ))}
-            </TextField>
+            />
             <TextField
               label="Phase"
               value={filters.Phase}
               onChange={e => setFilters({ ...filters, Phase: e.target.value })}
-              select
-              SelectProps={{ native: false }}
               sx={filterFieldSx}
               size="small"
-            >
-              <MenuItem value="">All</MenuItem>
-              {uniqueOptions('Phase').map(opt => (
-                <MenuItem key={opt} value={opt}>{opt}</MenuItem>
-              ))}
-            </TextField>
+            />
             <Select
               value={filters.CL}
               onChange={e => setFilters({ ...filters, CL: e.target.value })}
@@ -189,9 +217,9 @@ function ProfileView({
               <MenuItem value="inactive">Inactive</MenuItem>
             </Select>
             <TextField
-              label="Notes"
-              value={filters.Notes}
-              onChange={e => setFilters({ ...filters, Notes: e.target.value })}
+              label="Note"
+              value={filters.Note}
+              onChange={e => setFilters({ ...filters, Note: e.target.value })}
               sx={filterFieldSx}
               size="small"
             />
@@ -205,7 +233,8 @@ function ProfileView({
               InputLabelProps={{ shrink: true }}
             />
           </Stack>
-          {/* Tabela */}
+
+          {/* Jobs table */}
           <TableContainer component={Paper} sx={{ bgcolor: '#181c1f', borderRadius: 4, boxShadow: 'none' }}>
             <Table>
               <TableHead>
@@ -215,7 +244,7 @@ function ProfileView({
                   <TableCell sx={tableHeaderSx}>Phase</TableCell>
                   <TableCell sx={tableHeaderSx}>CL</TableCell>
                   <TableCell sx={tableHeaderSx}>Status</TableCell>
-                  <TableCell sx={tableHeaderSx}>Notes</TableCell>
+                  <TableCell sx={tableHeaderSx}>Note</TableCell>
                   <TableCell sx={tableHeaderSx}>Applied Date</TableCell>
                   <TableCell sx={tableHeaderSx}>Actions</TableCell>
                 </TableRow>
@@ -282,8 +311,8 @@ function ProfileView({
                     </TableCell>
                     <TableCell>
                       <TextField
-                        value={job.Notes}
-                        onChange={e => handleJobFieldChange(job._id, 'Notes', e.target.value)}
+                        value={job.Note}
+                        onChange={e => handleJobFieldChange(job._id, 'Note', e.target.value)}
                         variant="standard"
                         sx={tableInputSx}
                         InputProps={{ disableUnderline: true }}
@@ -320,7 +349,8 @@ function ProfileView({
                     </TableCell>
                   </TableRow>
                 ))}
-                {/* New row to add a new Job */}
+
+                {/* Add new job row */}
                 <TableRow>
                   <TableCell>
                     <TextField
@@ -383,8 +413,8 @@ function ProfileView({
                   </TableCell>
                   <TableCell>
                     <TextField
-                      name="Notes"
-                      value={newJob.Notes}
+                      name="Note"
+                      value={newJob.Note}
                       onChange={handleNewJobChange}
                       variant="standard"
                       sx={tableInputSx}
@@ -417,6 +447,8 @@ function ProfileView({
               </TableBody>
             </Table>
           </TableContainer>
+
+          {/* Logout button */}
           <Button
             variant="outlined"
             startIcon={<LogoutIcon />}
@@ -442,7 +474,7 @@ function ProfileView({
         </Stack>
       </Paper>
 
-      {/* Dialog para confirmação de apagar */}
+      {/* Delete confirmation dialog */}
       <Dialog
         open={deleteDialog.open}
         onClose={closeDeleteDialog}
@@ -508,7 +540,7 @@ function ProfileView({
   );
 }
 
-// Estilos para campos e cabeçalhos
+// Styles for filter fields
 const filterFieldSx = {
   minWidth: 120,
   mx: 0.5,
@@ -529,6 +561,7 @@ const filterFieldSx = {
   },
 };
 
+// Styles for table headers
 const tableHeaderSx = {
   color: '#00ff99',
   fontWeight: 700,
@@ -537,6 +570,7 @@ const tableHeaderSx = {
   fontFamily: 'monospace',
 };
 
+// Styles for table input fields
 const tableInputSx = {
   bgcolor: '#232526',
   color: '#1de9b6',

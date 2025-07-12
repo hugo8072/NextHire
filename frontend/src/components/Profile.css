@@ -1,3 +1,9 @@
+/**
+ * Profile Component Styles
+ * Simple beige theme with clean styling for job application management
+ */
+
+/* Main profile container with beige background */
 .profile-container {
   background-color: beige;
   color: #333;
@@ -9,6 +15,7 @@
   align-items: center;
 }
 
+/* Main profile table styling */
 .profile-table {
   width: 100%;
   max-width: 950px;
@@ -22,11 +29,13 @@
   margin: 0 auto;
 }
 
+/* Table header and cell styling */
 .profile-table th, .profile-table td {
   padding: 7px 10px;
   border-bottom: 1px solid #ddd;
 }
 
+/* Input fields and select dropdowns within table */
 .profile-input, .profile-table select {
   background: #fff;
   color: #333;
@@ -36,12 +45,14 @@
   font-size: 13px;
 }
 
+/* Checkbox styling with green accent */
 .profile-checkbox {
   accent-color: #28a745;
   width: 15px;
   height: 15px;
 }
 
+/* Primary action button (save, add) */
 .profile-btn {
   background-color: #28a745;
   color: white;
@@ -53,10 +64,12 @@
   margin-right: 4px;
 }
 
+/* Primary button hover effect */
 .profile-btn:hover {
   background-color: #218838;
 }
 
+/* Delete button styling */
 .profile-btn-delete {
   background-color: #b22222;
   color: white;
@@ -68,10 +81,12 @@
   margin-left: 2px;
 }
 
+/* Delete button hover effect */
 .profile-btn-delete:hover {
   background-color: #ff3333;
 }
 
+/* Global body styling override */
 body {
   background-color: beige !important;
 }
