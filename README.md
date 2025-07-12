@@ -23,22 +23,22 @@ A full-stack, security-focused application to track job applications, featuring 
 ## Screenshots
 
 ### Home Page
-![Home](imgs/Screenshot from 2025-07-12 13-43-24.png)
+![Home](imgs/1.png)
 
 ### Successful Registration
-![Registration Success](imgs/Screenshot from 2025-07-12 13-44-46.png)
+![Registration Success](imgs/3.png)
 
 ### Login Page
-![Login](imgs/Screenshot from 2025-07-12 13-45-26.png)
+![Login](imgs/4.png)
 
 ### Job Applications Dashboard
-![Job Applications](imgs/Screenshot from 2025-07-12 13-56-55.png)
+![Job Applications](imgs/10.png)
 
 ### Access Denied
-![Access Denied](imgs/Screenshot from 2025-07-12 13-47-15.png)
+![Access Denied](imgs/7.png)
 
 ### Input Blocked (Malicious Input)
-![Input Blocked](imgs/Screenshot from 2025-07-12 13-48-39.png)
+![Input Blocked](imgs/9.png)
 
 ---
 
