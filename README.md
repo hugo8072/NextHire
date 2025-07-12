@@ -1,7 +1,24 @@
-﻿# Job Application App 📑💼
+﻿# NextHire 📑💼
 
 ## Project Overview
-A full-stack, security-focused application to track job applications, featuring a robust REST API (Node.js/Express/MongoDB) and a modern React frontend.
+A full-stack application to track job applications, featuring a robust REST API (Node.js/Express/MongoDB) and a modern React frontend.
+
+---
+
+## Security Implementation
+NextHire was built with security as a top priority. Here’s what protects your data and users:
+
+### Backend Security
+- **JWT Authentication**: All protected routes require a valid token.
+- **Rate Limiting**: Prevents brute-force and abuse attacks.
+- **2FA (Two-Factor Authentication)**: Required for login.
+- **Input Sanitization & Malicious Input Detection**: All user input is sanitized and checked for XSS, SQL injection, and other attacks. Dangerous code or patterns are blocked immediately. After detection, the request is rejected and the user is notified.
+- **Login/2FA Attempt Tracking**: Middleware tracks failed attempts and enforces lockouts.
+- **Access Control**: Users can only access their own data; unauthorized access attempts are denied.
+- **Data Validation**: All critical routes use express-validator for strict data validation.
+- **Helmet**: Sets secure HTTP headers.
+- **CORS**: Only allows requests from the authorized frontend.
+
 
 ---
 
@@ -10,13 +27,42 @@ A full-stack, security-focused application to track job applications, featuring 
 - **Express Server**: Secure API with authentication, rate limiting, 2FA, and attempt tracking.
 - **REST API**: Endpoints for users and job applications.
 - **MongoDB**: NoSQL database for persistence.
-- **Security**: Input sanitization, detection of malicious input (XSS, SQLi, etc), Telegram alerts, and strong access control.
-- **Middlewares**: Authentication, login attempt tracking, 2FA, and malicious input detection.
+
+
 
 ### Frontend
 - **React**: Modern SPA with protected navigation.
 - **Material UI**: Responsive, stylish UI.
-- **Authentication Management**: Registration, login, verification, input blocking, and access control.
+- **Recaptcha**: Integrated with Google Recaptcha for bot protection.
+- **API URL Configurable**: Uses `REACT_APP_API_URL` from .env for backend communication.
+
+---
+
+## Environment Variables
+
+### Backend (`backend/.env`)
+```env
+PORT=8443
+REACT_APP_API_URL=http://localhost:443
+MONGO_URL=mongodb+srv://<username>:<password>@cluster0.8h1re.mongodb.net/
+JWT_SECRET_KEY=your_secret_key
+DB_NAME=job_app_db
+EMAIL_USER=your_email@provider.com
+EMAIL_PASS=your_email_password
+TELEGRAM_BOT_TOKEN=your_telegram_bot_token
+MASTER_EMAIL=your_admin_email@provider.com
+RECAPTCHA_SECRET_KEY=your_recaptcha_secret
+REDIS_HOST=127.0.0.1
+REDIS_PORT=6379
+```
+
+### Frontend (`frontend/.env`)
+```env
+REACT_APP_API_URL=http://localhost:8443
+REACT_APP_RECAPTCHA_SITE_KEY=your_recaptcha_site_key
+```
+
+> **Note:** Never commit real secrets or production credentials to public repositories. The above are example keys/values.
 
 ---
 
@@ -42,13 +88,7 @@ A full-stack, security-focused application to track job applications, featuring 
 
 ---
 
-## Security Highlights
-- **Input Sanitization**: All user input is sanitized on the backend to prevent XSS, SQL injection, and other attacks.
-- **Malicious Input Detection**: Attempts to submit dangerous code or patterns are blocked and tracked. After 3 attempts, the user is temporarily blocked.
-- **2FA**: Two-factor authentication is required for sensitive actions.
-- **Rate Limiting**: Prevents brute-force and abuse.
-- **Telegram Alerts**: Security events (e.g., repeated malicious input) trigger instant Telegram notifications to the admin.
-- **Access Control**: Users can only access their own data; unauthorized access attempts are denied.
+
 
 ---
 
@@ -80,8 +120,8 @@ imgs/               # Screenshots for documentation
 ### Installation
 1. Clone the repository:
     ```sh
-    git clone https://github.com/hugo8072/Job_Application_App
-    cd Job_Application_App
+    git clone https://github.com/hugo8072/NextHire.git
+    cd NextHire
     ```
 2. Install backend and frontend dependencies:
     ```sh
