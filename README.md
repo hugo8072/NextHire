@@ -43,8 +43,7 @@ NextHire was built with security as a top priority. Here’s what protects your 
 - `MONGO_URL`: MongoDB connection string
 - `JWT_SECRET_KEY`: Secret for JWT authentication
 - `DB_NAME`: MongoDB database name
-- `EMAIL_USER` / `EMAIL_PASS`: Credentials for sending emails
-- `TELEGRAM_BOT_TOKEN`: Telegram bot token for admin alerts
+- `TELEGRAM_BOT_TOKEN`: Telegram bot token 
 - `MASTER_EMAIL`: Admin email address
 - `RECAPTCHA_SECRET_KEY`: Google Recaptcha secret key
 
