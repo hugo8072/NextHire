@@ -1,8 +1,5 @@
 ﻿# NextHire 📑💼
 
-## About
-NextHire is a secure and modern job application tracker with a Node.js/Express backend and a React frontend. It helps users organize and monitor their job search efficiently.
-
 ## Project Overview
 A full-stack application to track job applications, featuring a robust REST API (Node.js/Express/MongoDB) and a modern React frontend.
 
@@ -79,6 +76,8 @@ NextHire was built with security as a top priority. Here’s what protects your 
 ### Input Blocked (Malicious Input)
 ![Input Blocked](imgs/9.png)
 
+### Error 404 (Not Found)
+![Error 404](imgs/8.png)
 ---
 
 ## Project Structure
